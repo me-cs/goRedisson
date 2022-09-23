@@ -1,0 +1,89 @@
+package goRedisson
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+)
+
+var (
+	ErrObtainLockTimeout = errors.New("obtained lock timeout")
+)
+
+type RedisLock struct {
+	BaseLock
+}
+
+func (m *RedisLock) getChannelName() string {
+	return m.prefixName("redisson_lock__channel", m.getRawName())
+}
+
+func (m *RedisLock) lock() error {
+	return m.TryLock(-1)
+}
+
+func NewRedisLock(name string, goRedisson *GoRedisson) *RedisLock {
+	redisLock := &RedisLock{}
+	redisLock.BaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisLock)
+	return redisLock
+}
+
+func (m *RedisLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+	result, err := m.goRedisson.client.Eval(context.Background(), `
+if (redis.call('exists', KEYS[1]) == 0) then
+	redis.call('hincrby', KEYS[1], ARGV[2], 1);
+	redis.call('pexpire', KEYS[1], ARGV[1]);
+	return nil;
+end;
+if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then 
+	redis.call('hincrby', KEYS[1], ARGV[2], 1); 
+	redis.call('pexpire', KEYS[1], ARGV[1]); 
+	return nil; 
+end; 
+return redis.call('pttl', KEYS[1]);
+`, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+	if err != nil {
+		if err.Error() == "redis: nil" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	if ttl, ok := result.(int64); ok {
+		return &ttl, nil
+	} else {
+		return nil, fmt.Errorf("tryAcquireInner result converter to int64 error, value is %v", result)
+	}
+}
+
+func (m *RedisLock) unlockInner(goroutineId uint64) (*int64, error) {
+	defer m.cancelExpirationRenewal(goroutineId)
+	result, err := m.goRedisson.client.Eval(context.TODO(), `
+if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then 
+	return nil;
+end; 
+local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1); 
+if (counter > 0) then 
+	redis.call('pexpire', KEYS[1], ARGV[2]); 
+	return 0; 
+else 
+	redis.call('del', KEYS[1]); 
+	redis.call('publish', KEYS[2], ARGV[1]); 
+	return 1; 
+end; 
+return nil;
+`, []string{m.getRawName(), m.getChannelName()}, UNLOCK_MESSAGE, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+	if err != nil {
+		if err.Error() == "redis: nil" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	if b, ok := result.(int64); ok {
+		return &b, nil
+	} else {
+		return nil, fmt.Errorf("unlock result converter to bool error, value is %v", result)
+	}
+}
