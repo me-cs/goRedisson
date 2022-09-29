@@ -81,7 +81,7 @@ return currValue;
 }
 
 func (m *GoRedissonAtomicLong) GetAndAdd(delta int64) (int64, error) {
-	v, err := m.goRedisson.client.Do(context.Background(), "INCRBYFLOAT", m.getRawName(), delta).Int64()
+	v, err := m.goRedisson.client.Do(context.Background(), "INCRBY", m.getRawName(), delta).Int64()
 	if err != nil {
 		return 0, err
 	}
