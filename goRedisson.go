@@ -38,10 +38,18 @@ type OptionFunc func(g *GoRedisson)
 //	}
 //}
 
-func (g *GoRedisson) GetLock(key string) RLock {
+func (g *GoRedisson) GetLock(key string) Lock {
 	return NewRedisLock(key, g)
 }
 
-func (g *GoRedisson) GetReadWriteLock(key string) RReadWriteLock {
+func (g *GoRedisson) GetReadWriteLock(key string) ReadWriteLock {
 	return NewRedisReadWriteLock(key, g)
+}
+
+func (g *GoRedisson) GetAtomicDouble(key string) AtomicDouble {
+	return NewGoRedissonAtomicDouble(g, key)
+}
+
+func (g *GoRedisson) GetAtomicLong(key string) AtomicLong {
+	return NewGoRedissonAtomicLong(g, key)
 }

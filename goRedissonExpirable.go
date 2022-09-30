@@ -1,11 +1,11 @@
 package goRedisson
 
-type GoRedissonExpirable struct {
-	*GoRedissonObject
+type goRedissonExpirable struct {
+	*goRedissonObject
 }
 
-func NewGoRedissonExpirable(name string) *GoRedissonExpirable {
-	return &GoRedissonExpirable{
-		GoRedissonObject: NewGoRedissonObject(name),
+func NewGoRedissonExpirable(name string) *goRedissonExpirable {
+	return &goRedissonExpirable{
+		goRedissonObject: NewGoRedissonObject(name),
 	}
 }

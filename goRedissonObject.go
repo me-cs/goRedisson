@@ -2,11 +2,11 @@ package goRedisson
 
 import "strings"
 
-type GoRedissonObject struct {
+type goRedissonObject struct {
 	name string
 }
 
-func (m *GoRedissonObject) prefixName(prefix string, name string) string {
+func (m *goRedissonObject) prefixName(prefix string, name string) string {
 	if strings.Contains(name, "{") {
 		return prefix + ":" + name
 
@@ -14,17 +14,17 @@ func (m *GoRedissonObject) prefixName(prefix string, name string) string {
 	return prefix + ":{" + name + "}"
 }
 
-func (m *GoRedissonObject) suffixName(name, suffix string) string {
+func (m *goRedissonObject) suffixName(name, suffix string) string {
 	if strings.Contains(name, "{") {
 		return name + ":" + suffix
 	}
 	return "{" + name + "}" + suffix
 }
 
-func (m *GoRedissonObject) getRawName() string {
+func (m *goRedissonObject) getRawName() string {
 	return m.name
 }
 
-func NewGoRedissonObject(name string) *GoRedissonObject {
-	return &GoRedissonObject{name: name}
+func NewGoRedissonObject(name string) *goRedissonObject {
+	return &goRedissonObject{name: name}
 }

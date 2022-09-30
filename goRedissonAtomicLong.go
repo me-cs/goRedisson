@@ -5,7 +5,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RAtomicLong interface {
+type AtomicLong interface {
 	GetAndDecrement() (int64, error)
 	AddAndGet(int642 int64) int64
 	CompareAndSet(int64, int64) (bool, error)
@@ -20,26 +20,26 @@ type RAtomicLong interface {
 }
 
 var (
-	_ RAtomicLong = (*GoRedissonAtomicLong)(nil)
+	_ AtomicLong = (*goRedissonAtomicLong)(nil)
 )
 
-type GoRedissonAtomicLong struct {
-	*GoRedissonExpirable
+type goRedissonAtomicLong struct {
+	*goRedissonExpirable
 	goRedisson *GoRedisson
 }
 
-func NewGoRedissonAtomicLong(goRedisson *GoRedisson, name string) *GoRedissonAtomicLong {
-	return &GoRedissonAtomicLong{
-		GoRedissonExpirable: NewGoRedissonExpirable(name),
+func NewGoRedissonAtomicLong(goRedisson *GoRedisson, name string) *goRedissonAtomicLong {
+	return &goRedissonAtomicLong{
+		goRedissonExpirable: NewGoRedissonExpirable(name),
 		goRedisson:          goRedisson,
 	}
 }
 
-func (m *GoRedissonAtomicLong) AddAndGet(delta int64) int64 {
+func (m *goRedissonAtomicLong) AddAndGet(delta int64) int64 {
 	return m.goRedisson.client.IncrBy(context.Background(), m.getRawName(), delta).Val()
 }
 
-func (m *GoRedissonAtomicLong) CompareAndSet(expect int64, update int64) (bool, error) {
+func (m *goRedissonAtomicLong) CompareAndSet(expect int64, update int64) (bool, error) {
 	r, err := m.goRedisson.client.Eval(context.Background(), `
 local currValue = redis.call('get', KEYS[1]);
 if currValue == ARGV[1]
@@ -56,11 +56,11 @@ end
 	return r == 1, nil
 }
 
-func (m *GoRedissonAtomicLong) DecrementAndGet() int64 {
+func (m *goRedissonAtomicLong) DecrementAndGet() int64 {
 	return m.goRedisson.client.IncrBy(context.Background(), m.getRawName(), -1).Val()
 }
 
-func (m *GoRedissonAtomicLong) Get() (int64, error) {
+func (m *goRedissonAtomicLong) Get() (int64, error) {
 	r, err := m.goRedisson.client.Get(context.Background(), m.getRawName()).Int64()
 	if err == redis.Nil {
 		return 0, nil
@@ -68,7 +68,7 @@ func (m *GoRedissonAtomicLong) Get() (int64, error) {
 	return r, err
 }
 
-func (m *GoRedissonAtomicLong) GetAndDelete() (int64, error) {
+func (m *goRedissonAtomicLong) GetAndDelete() (int64, error) {
 	r, err := m.goRedisson.client.Eval(context.Background(), `
 local currValue = redis.call('get', KEYS[1]);
 redis.call('del', KEYS[1]);
@@ -80,7 +80,7 @@ return currValue;
 	return r, err
 }
 
-func (m *GoRedissonAtomicLong) GetAndAdd(delta int64) (int64, error) {
+func (m *goRedissonAtomicLong) GetAndAdd(delta int64) (int64, error) {
 	v, err := m.goRedisson.client.Do(context.Background(), "INCRBY", m.getRawName(), delta).Int64()
 	if err != nil {
 		return 0, err
@@ -88,7 +88,7 @@ func (m *GoRedissonAtomicLong) GetAndAdd(delta int64) (int64, error) {
 	return v - delta, nil
 }
 
-func (m *GoRedissonAtomicLong) GetAndSet(newValue int64) (int64, error) {
+func (m *goRedissonAtomicLong) GetAndSet(newValue int64) (int64, error) {
 	f, err := m.goRedisson.client.GetSet(context.Background(), m.getRawName(), newValue).Int64()
 	if err == redis.Nil {
 		return 0, nil
@@ -96,18 +96,18 @@ func (m *GoRedissonAtomicLong) GetAndSet(newValue int64) (int64, error) {
 	return f, err
 }
 
-func (m *GoRedissonAtomicLong) IncrementAndGet() int64 {
+func (m *goRedissonAtomicLong) IncrementAndGet() int64 {
 	return m.goRedisson.client.IncrBy(context.Background(), m.getRawName(), 1).Val()
 }
 
-func (m *GoRedissonAtomicLong) GetAndIncrement() (int64, error) {
+func (m *goRedissonAtomicLong) GetAndIncrement() (int64, error) {
 	return m.GetAndAdd(1)
 }
 
-func (m *GoRedissonAtomicLong) GetAndDecrement() (int64, error) {
+func (m *goRedissonAtomicLong) GetAndDecrement() (int64, error) {
 	return m.GetAndAdd(-1)
 }
 
-func (m *GoRedissonAtomicLong) Set(newValue int64) error {
+func (m *goRedissonAtomicLong) Set(newValue int64) error {
 	return m.goRedisson.client.Do(context.Background(), "SET", m.getRawName(), newValue).Err()
 }

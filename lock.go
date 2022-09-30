@@ -12,5 +12,3 @@ type Lock interface {
 	TryLock(time.Duration) error
 	Unlock() error
 }
-
-type RLock Lock

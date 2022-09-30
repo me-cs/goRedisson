@@ -7,29 +7,29 @@ import (
 	"time"
 )
 
-type RedisReadLock struct {
-	BaseLock
+type goRedissonReadLock struct {
+	goRedissonBaseLock
 }
 
-func NewReadLock(name string, goRedisson *GoRedisson) *RedisReadLock {
-	redisReadLock := &RedisReadLock{}
-	redisReadLock.BaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisReadLock)
-	return redisReadLock
+func NewReadLock(name string, goRedisson *GoRedisson) *goRedissonReadLock {
+	goRedissonReadLock := &goRedissonReadLock{}
+	goRedissonReadLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, goRedissonReadLock)
+	return goRedissonReadLock
 }
 
-func (m *RedisReadLock) getChannelName() string {
+func (m *goRedissonReadLock) getChannelName() string {
 	return m.prefixName("go_redisson_rwlock", m.getRawName())
 }
 
-func (m *RedisReadLock) getWriteLockName(goroutineId uint64) string {
+func (m *goRedissonReadLock) getWriteLockName(goroutineId uint64) string {
 	return m.getLockName(goroutineId) + ":write"
 }
 
-func (m *RedisReadLock) getReadWriteTimeoutNamePrefix(goroutineId uint64) string {
+func (m *goRedissonReadLock) getReadWriteTimeoutNamePrefix(goroutineId uint64) string {
 	return m.suffixName(m.getRawName(), m.getLockName(goroutineId)) + ":rwlock_timeout"
 }
 
-func (m *RedisReadLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+func (m *goRedissonReadLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	if leaseTime > 0 {
 		return m.tryLockInner(waitTime, leaseTime, goroutineId)
 	}
@@ -48,7 +48,7 @@ func (m *RedisReadLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineI
 	return ttl, nil
 }
 
-func (m *RedisReadLock) Unlock() error {
+func (m *goRedissonReadLock) Unlock() error {
 	goroutineId, err := GetId()
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func (m *RedisReadLock) Unlock() error {
 	return nil
 }
 
-func (m *RedisReadLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+func (m *goRedissonReadLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(context.Background(), `
 local mode = redis.call('hget', KEYS[1], 'mode');
 if (mode == false) then
@@ -100,11 +100,11 @@ return redis.call('pttl', KEYS[1]);
 	}
 }
 
-func (m *RedisReadLock) getKeyPrefix(goroutineId uint64, timeoutPrefix string) string {
+func (m *goRedissonReadLock) getKeyPrefix(goroutineId uint64, timeoutPrefix string) string {
 	return strings.Split(timeoutPrefix, ":"+m.getLockName(goroutineId))[0]
 }
 
-func (m *RedisReadLock) unlockInner(goroutineId uint64) (*int64, error) {
+func (m *goRedissonReadLock) unlockInner(goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
 
 	timeoutPrefix := m.getReadWriteTimeoutNamePrefix(goroutineId)
@@ -168,7 +168,7 @@ return 1;
 	}
 }
 
-func (m *RedisReadLock) renewExpirationInner(goroutineId uint64) (int64, error) {
+func (m *goRedissonReadLock) renewExpirationInner(goroutineId uint64) (int64, error) {
 	timeoutPrefix := m.getReadWriteTimeoutNamePrefix(goroutineId)
 	keyPrefix := m.getKeyPrefix(goroutineId, timeoutPrefix)
 

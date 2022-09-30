@@ -24,7 +24,7 @@ func TestReadLock_TryLock(t *testing.T) {
 
 func TestWWLockUnlock(t *testing.T) {
 	g := getGodisson()
-	var wl RReadWriteLock
+	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestWWLockUnlock")
 	go func() {
 		err := wl.writeLock().TryLock(3 * time.Second)
@@ -52,7 +52,7 @@ func TestWWLockUnlock(t *testing.T) {
 
 func TestWRLockUnlock(t *testing.T) {
 	g := getGodisson()
-	var wl RReadWriteLock
+	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestWRLockUnlock")
 	go func() {
 		err := wl.readLock().TryLock(3 * time.Second)
@@ -79,7 +79,7 @@ func TestWRLockUnlock(t *testing.T) {
 
 func TestRWLockUnlock(t *testing.T) {
 	g := getGodisson()
-	var wl RReadWriteLock
+	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRWLockUnlock")
 	go func() {
 		err := wl.writeLock().TryLock(3 * time.Second)
@@ -107,7 +107,7 @@ func TestRWLockUnlock(t *testing.T) {
 
 func TestRWLock(t *testing.T) {
 	g := getGodisson()
-	var wl RReadWriteLock
+	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRWLock")
 	err := wl.writeLock().TryLock(3 * time.Second)
 	if err != nil {
@@ -123,7 +123,7 @@ func TestRWLock(t *testing.T) {
 
 func TestRRLock(t *testing.T) {
 	g := getGodisson()
-	var wl RReadWriteLock
+	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRRLock")
 	err := wl.readLock().TryLock(3 * time.Second)
 	if err != nil {

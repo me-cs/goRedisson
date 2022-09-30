@@ -73,8 +73,8 @@ func (e *ExpirationEntry) getFirstGoroutineId() *uint64 {
 	return &first
 }
 
-type BaseLock struct {
-	*GoRedissonExpirable
+type goRedissonBaseLock struct {
+	*goRedissonExpirable
 	ExpirationRenewalMap  sync.Map
 	internalLockLeaseTime time.Duration
 	id                    string
@@ -83,9 +83,9 @@ type BaseLock struct {
 	goRedisson            *GoRedisson
 }
 
-func NewBaseLock(key, name string, redisson *GoRedisson, locker InnerLocker) *BaseLock {
-	baseLock := &BaseLock{
-		GoRedissonExpirable:   NewGoRedissonExpirable(name),
+func NewBaseLock(key, name string, redisson *GoRedisson, locker InnerLocker) *goRedissonBaseLock {
+	baseLock := &goRedissonBaseLock{
+		goRedissonExpirable:   NewGoRedissonExpirable(name),
 		internalLockLeaseTime: redisson.watchDogTimeout,
 		id:                    key,
 		lock:                  locker,
@@ -95,15 +95,15 @@ func NewBaseLock(key, name string, redisson *GoRedisson, locker InnerLocker) *Ba
 	return baseLock
 }
 
-func (m *BaseLock) getLockName(goroutineId uint64) string {
+func (m *goRedissonBaseLock) getLockName(goroutineId uint64) string {
 	return m.id + ":" + strconv.FormatUint(goroutineId, 10)
 }
 
-func (m *BaseLock) getEntryName() string {
+func (m *goRedissonBaseLock) getEntryName() string {
 	return m.entryName
 }
 
-func (m *BaseLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+func (m *goRedissonBaseLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	if leaseTime > 0 {
 		return m.lock.tryLockInner(waitTime, leaseTime, goroutineId)
 	}
@@ -122,7 +122,7 @@ func (m *BaseLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uin
 	return ttl, nil
 }
 
-func (m *BaseLock) scheduleExpirationRenewal(goroutineId uint64) {
+func (m *goRedissonBaseLock) scheduleExpirationRenewal(goroutineId uint64) {
 	entry := NewRenewEntry()
 	oldEntry, stored := m.ExpirationRenewalMap.LoadOrStore(m.getEntryName(), entry)
 	if stored {
@@ -139,7 +139,7 @@ func (m *BaseLock) scheduleExpirationRenewal(goroutineId uint64) {
 	}
 }
 
-func (m *BaseLock) renewExpirationInner(goroutineId uint64) (int64, error) {
+func (m *goRedissonBaseLock) renewExpirationInner(goroutineId uint64) (int64, error) {
 	result, err := m.goRedisson.client.Eval(context.TODO(), `
 if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
 	redis.call('pexpire', KEYS[1], ARGV[1]);
@@ -157,7 +157,7 @@ return 0;
 	}
 }
 
-func (m *BaseLock) renewExpiration() {
+func (m *goRedissonBaseLock) renewExpiration() {
 	entryName := m.getEntryName()
 	ee, ok := m.ExpirationRenewalMap.Load(entryName)
 	if !ok {
@@ -197,7 +197,7 @@ func (m *BaseLock) renewExpiration() {
 
 }
 
-func (m *BaseLock) cancelExpirationRenewal(goroutineId uint64) {
+func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	entry, ok := m.ExpirationRenewalMap.Load(m.getEntryName())
 	if !ok {
 		return
@@ -215,7 +215,7 @@ func (m *BaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	}
 }
 
-func (m *BaseLock) TryLock(waitTime time.Duration) error {
+func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 	wait := waitTime.Milliseconds()
 	current := time.Now().UnixMilli()
 	goroutineId, err := GetId()
@@ -284,7 +284,7 @@ func (m *BaseLock) TryLock(waitTime time.Duration) error {
 	}
 }
 
-func (m *BaseLock) Unlock() error {
+func (m *goRedissonBaseLock) Unlock() error {
 	goroutineId, err := GetId()
 	if err != nil {
 		return err

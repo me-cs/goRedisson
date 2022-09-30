@@ -1,30 +1,30 @@
 package goRedisson
 
-type RReadWriteLock interface {
-	readLock() RLock
-	writeLock() RLock
+type ReadWriteLock interface {
+	readLock() Lock
+	writeLock() Lock
 }
 
 var (
-	_ RReadWriteLock = (*RedisReadWriteLock)(nil)
+	_ ReadWriteLock = (*goRedissonReadWriteLock)(nil)
 )
 
-type RedisReadWriteLock struct {
-	*GoRedissonExpirable
+type goRedissonReadWriteLock struct {
+	*goRedissonExpirable
 	goRedisson *GoRedisson
 }
 
-func (m *RedisReadWriteLock) readLock() RLock {
+func (m *goRedissonReadWriteLock) readLock() Lock {
 	return NewReadLock(m.name, m.goRedisson)
 }
 
-func (m *RedisReadWriteLock) writeLock() RLock {
+func (m *goRedissonReadWriteLock) writeLock() Lock {
 	return NewRedisWriteLock(m.name, m.goRedisson)
 }
 
-func NewRedisReadWriteLock(name string, redisson *GoRedisson) *RedisReadWriteLock {
-	return &RedisReadWriteLock{
-		GoRedissonExpirable: NewGoRedissonExpirable(name),
+func NewRedisReadWriteLock(name string, redisson *GoRedisson) *goRedissonReadWriteLock {
+	return &goRedissonReadWriteLock{
+		goRedissonExpirable: NewGoRedissonExpirable(name),
 		goRedisson:          redisson,
 	}
 }

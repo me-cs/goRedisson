@@ -7,7 +7,7 @@ import (
 )
 
 type RedisWriteLock struct {
-	BaseLock
+	goRedissonBaseLock
 }
 
 func (m *RedisWriteLock) getChannelName() string {
@@ -20,7 +20,7 @@ func (m *RedisWriteLock) getReadLockName(goroutineId uint64) string {
 
 func NewRedisWriteLock(name string, goRedisson *GoRedisson) *RedisWriteLock {
 	redisWriteLock := &RedisWriteLock{}
-	redisWriteLock.BaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisWriteLock)
+	redisWriteLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisWriteLock)
 	return redisWriteLock
 }
 

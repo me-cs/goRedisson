@@ -11,25 +11,25 @@ var (
 	ErrObtainLockTimeout = errors.New("obtained lock timeout")
 )
 
-type RedisLock struct {
-	BaseLock
+type goRedissonLock struct {
+	goRedissonBaseLock
 }
 
-func (m *RedisLock) getChannelName() string {
+func (m *goRedissonLock) getChannelName() string {
 	return m.prefixName("redisson_lock__channel", m.getRawName())
 }
 
-func (m *RedisLock) lock() error {
+func (m *goRedissonLock) lock() error {
 	return m.TryLock(-1)
 }
 
-func NewRedisLock(name string, goRedisson *GoRedisson) *RedisLock {
-	redisLock := &RedisLock{}
-	redisLock.BaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisLock)
+func NewRedisLock(name string, goRedisson *GoRedisson) *goRedissonLock {
+	redisLock := &goRedissonLock{}
+	redisLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisLock)
 	return redisLock
 }
 
-func (m *RedisLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+func (m *goRedissonLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(context.Background(), `
 if (redis.call('exists', KEYS[1]) == 0) then
 	redis.call('hincrby', KEYS[1], ARGV[2], 1);
@@ -57,7 +57,7 @@ return redis.call('pttl', KEYS[1]);
 	}
 }
 
-func (m *RedisLock) unlockInner(goroutineId uint64) (*int64, error) {
+func (m *goRedissonLock) unlockInner(goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
 	result, err := m.goRedisson.client.Eval(context.TODO(), `
 if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then 
