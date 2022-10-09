@@ -10,9 +10,43 @@ TODO
 ```go
 package main
 
-func main(){
-	//todo 
+import (
+	"github.com/go-redis/redis/v8"
+	"github.com/me-cs/goRedisson"
+	"log"
+	"time"
+)
+
+func main() {
+	// create redis client
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	defer redisDB.Close()
+
+	g := goRedisson.NewGoRedisson(redisDB)
+
+	mutex := g.GetLock("example")
+	err := mutex.TryLock(time.Second)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	//Your business code
+
+
+
+	err = mutex.Unlock()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	return
 }
+
 ```
 
 ## Contributing
