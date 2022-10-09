@@ -53,3 +53,7 @@ func (g *GoRedisson) GetAtomicDouble(key string) AtomicDouble {
 func (g *GoRedisson) GetAtomicLong(key string) AtomicLong {
 	return NewGoRedissonAtomicLong(g, key)
 }
+
+func (g *GoRedisson) GetBitSet(key string) BitSet {
+	return NewGoRedissonBitSet(g, key)
+}

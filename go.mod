@@ -5,8 +5,10 @@ go 1.19
 replace github.com/me-cs/goRedisson => ../../goRedisson
 
 require (
+	github.com/bits-and-blooms/bitset v1.3.3
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/satori/go.uuid v1.2.0
+
 )
 
 require (
