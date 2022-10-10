@@ -1,6 +1,6 @@
 # goRedisson
 
-*Redisson golang implementation*
+*Redisson golang implementation(Continuous coding in progress)*
 
 ## Description
 TODO
