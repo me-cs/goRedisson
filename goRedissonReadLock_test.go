@@ -108,22 +108,6 @@ func TestRWLockUnlock(t *testing.T) {
 	}
 }
 
-//func TestRWLock(t *testing.T) {
-//	g := getGodisson()
-//	var wl ReadWriteLock
-//	wl = g.GetReadWriteLock("TestRWLock")
-//	err := wl.WriteLock().TryLock(3 * time.Second)
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer wl.WriteLock().Unlock()
-//
-//	err = wl.ReadLock().TryLock(3 * time.Second)
-//	if err == nil {
-//		panic("it should not be nil")
-//	}
-//}
-
 func TestRRLock(t *testing.T) {
 	g := getGodisson()
 	var wl ReadWriteLock
