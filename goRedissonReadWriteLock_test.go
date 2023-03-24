@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func TestMy(t *testing.T) {
-	l := getGodisson().GetReadWriteLock("GetReadWriteLock")
+func TestReadWriteLock(t *testing.T) {
+	l := getGodisson().GetReadWriteLock("TestReadWriteLock")
 	a := 0
 	wg := sync.WaitGroup{}
 	wg.Add(1)
