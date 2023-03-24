@@ -1,6 +1,6 @@
 # goRedisson
 
-*Redisson golang implementation(Continuous coding in progress)*
+*Redisson golang implementation(Continuous coding in progress,There are still some bugs in the read/write lock, which I will fix as soon as possible.)*
 
 ## Description
 TODO
