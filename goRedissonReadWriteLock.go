@@ -24,11 +24,11 @@ func (m *goRedissonReadWriteLock) WriteLock() Lock {
 	return m.wLock
 }
 
-func NewRedisReadWriteLock(name string, redisson *GoRedisson) ReadWriteLock {
+func newRedisReadWriteLock(name string, redisson *GoRedisson) ReadWriteLock {
 	return &goRedissonReadWriteLock{
-		goRedissonExpirable: NewGoRedissonExpirable(name),
+		goRedissonExpirable: newGoRedissonExpirable(name),
 		goRedisson:          redisson,
-		rLock:               NewReadLock(name, redisson),
-		wLock:               NewRedisWriteLock(name, redisson),
+		rLock:               newReadLock(name, redisson),
+		wLock:               newRedisWriteLock(name, redisson),
 	}
 }

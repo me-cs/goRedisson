@@ -13,9 +13,9 @@ type goRedissonReadLock struct {
 	goRedissonBaseLock
 }
 
-func NewReadLock(name string, goRedisson *GoRedisson) Lock {
+func newReadLock(name string, goRedisson *GoRedisson) Lock {
 	goRedissonReadLock := &goRedissonReadLock{}
-	goRedissonReadLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, goRedissonReadLock)
+	goRedissonReadLock.goRedissonBaseLock = *newBaseLock(goRedisson.id, name, goRedisson, goRedissonReadLock)
 	return goRedissonReadLock
 }
 
@@ -51,7 +51,7 @@ func (m *goRedissonReadLock) tryAcquire(waitTime, leaseTime time.Duration, gorou
 }
 
 func (m *goRedissonReadLock) Unlock() error {
-	goroutineId, err := GetId()
+	goroutineId, err := getId()
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ end;
 redis.call('del', KEYS[1]);
 redis.call('publish', KEYS[2], ARGV[1]);
 return 1; 
-`, []string{m.getRawName(), m.getChannelName(), timeoutPrefix, keyPrefix}, UNLOCK_MESSAGE, m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName(), m.getChannelName(), timeoutPrefix, keyPrefix}, unlockMessage, m.getLockName(goroutineId)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil

@@ -41,9 +41,9 @@ func WithWatchDogTimeout(t time.Duration) OptionFunc {
 }
 
 func (g *GoRedisson) GetLock(key string) Lock {
-	return NewRedisLock(key, g)
+	return newRedisLock(key, g)
 }
 
 func (g *GoRedisson) GetReadWriteLock(key string) ReadWriteLock {
-	return NewRedisReadWriteLock(key, g)
+	return newRedisReadWriteLock(key, g)
 }

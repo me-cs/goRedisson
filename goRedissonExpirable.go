@@ -4,8 +4,8 @@ type goRedissonExpirable struct {
 	*goRedissonObject
 }
 
-func NewGoRedissonExpirable(name string) *goRedissonExpirable {
+func newGoRedissonExpirable(name string) *goRedissonExpirable {
 	return &goRedissonExpirable{
-		goRedissonObject: NewGoRedissonObject(name),
+		goRedissonObject: newGoRedissonObject(name),
 	}
 }

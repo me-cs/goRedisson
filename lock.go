@@ -2,7 +2,7 @@ package goRedisson
 
 import "time"
 
-type InnerLocker interface {
+type innerLocker interface {
 	tryLockInner(time.Duration, time.Duration, uint64) (*int64, error)
 	unlockInner(uint64) (*int64, error)
 	getChannelName() string

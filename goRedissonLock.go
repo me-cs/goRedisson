@@ -29,9 +29,9 @@ func (m *goRedissonLock) lock() error {
 	return m.TryLock(-1)
 }
 
-func NewRedisLock(name string, goRedisson *GoRedisson) Lock {
+func newRedisLock(name string, goRedisson *GoRedisson) Lock {
 	redisLock := &goRedissonLock{}
-	redisLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisLock)
+	redisLock.goRedissonBaseLock = *newBaseLock(goRedisson.id, name, goRedisson, redisLock)
 	return redisLock
 }
 
@@ -79,7 +79,7 @@ else
 	return 1; 
 end; 
 return nil;
-`, []string{m.getRawName(), m.getChannelName()}, UNLOCK_MESSAGE, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName(), m.getChannelName()}, unlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil

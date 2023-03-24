@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	UNLOCK_MESSAGE      int64 = 0
-	READ_UNLOCK_MESSAGE int64 = 1
+	unlockMessage     int64 = 0
+	readUnlockMessage int64 = 1
 )
 
-type ExpirationEntry struct {
+type expirationEntry struct {
 	sync.Mutex
 	goroutineIds map[uint64]int64
 	cancelFunc   context.CancelFunc
 }
 
-func NewRenewEntry() *ExpirationEntry {
-	return &ExpirationEntry{
+func newRenewEntry() *expirationEntry {
+	return &expirationEntry{
 		goroutineIds: make(map[uint64]int64),
 	}
 }
 
-func (e *ExpirationEntry) addGoroutineId(goroutineId uint64) {
+func (e *expirationEntry) addGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
 	count, ok := e.goroutineIds[goroutineId]
@@ -37,7 +37,7 @@ func (e *ExpirationEntry) addGoroutineId(goroutineId uint64) {
 	e.goroutineIds[goroutineId] = count
 }
 
-func (e *ExpirationEntry) removeGoroutineId(goroutineId uint64) {
+func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
 
@@ -53,11 +53,11 @@ func (e *ExpirationEntry) removeGoroutineId(goroutineId uint64) {
 	}
 }
 
-func (e *ExpirationEntry) hasNoThreads() bool {
+func (e *expirationEntry) hasNoThreads() bool {
 	return len(e.goroutineIds) == 0
 }
 
-func (e *ExpirationEntry) getFirstGoroutineId() *uint64 {
+func (e *expirationEntry) getFirstGoroutineId() *uint64 {
 	e.Lock()
 	defer e.Unlock()
 	if len(e.goroutineIds) == 0 {
@@ -79,13 +79,13 @@ type goRedissonBaseLock struct {
 	internalLockLeaseTime time.Duration
 	id                    string
 	entryName             string
-	lock                  InnerLocker
+	lock                  innerLocker
 	goRedisson            *GoRedisson
 }
 
-func NewBaseLock(key, name string, redisson *GoRedisson, locker InnerLocker) *goRedissonBaseLock {
+func newBaseLock(key, name string, redisson *GoRedisson, locker innerLocker) *goRedissonBaseLock {
 	baseLock := &goRedissonBaseLock{
-		goRedissonExpirable:   NewGoRedissonExpirable(name),
+		goRedissonExpirable:   newGoRedissonExpirable(name),
 		internalLockLeaseTime: redisson.watchDogTimeout,
 		id:                    key,
 		lock:                  locker,
@@ -123,10 +123,10 @@ func (m *goRedissonBaseLock) tryAcquire(waitTime, leaseTime time.Duration, gorou
 }
 
 func (m *goRedissonBaseLock) scheduleExpirationRenewal(goroutineId uint64) {
-	entry := NewRenewEntry()
+	entry := newRenewEntry()
 	oldEntry, stored := m.ExpirationRenewalMap.LoadOrStore(m.getEntryName(), entry)
 	if stored {
-		oldEntry.(*ExpirationEntry).addGoroutineId(goroutineId)
+		oldEntry.(*expirationEntry).addGoroutineId(goroutineId)
 	} else {
 		entry.addGoroutineId(goroutineId)
 		m.renewExpiration()
@@ -174,7 +174,7 @@ func (m *goRedissonBaseLock) renewExpiration() {
 			if !ok {
 				return
 			}
-			goroutineId := ent.(*ExpirationEntry).getFirstGoroutineId()
+			goroutineId := ent.(*expirationEntry).getFirstGoroutineId()
 			if goroutineId == nil {
 				return
 			}
@@ -193,7 +193,7 @@ func (m *goRedissonBaseLock) renewExpiration() {
 		}
 	}(ctx)
 
-	ee.(*ExpirationEntry).cancelFunc = cancel
+	ee.(*expirationEntry).cancelFunc = cancel
 
 }
 
@@ -202,7 +202,7 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	if !ok {
 		return
 	}
-	task := entry.(*ExpirationEntry)
+	task := entry.(*expirationEntry)
 	if goroutineId != 0 {
 		task.removeGoroutineId(goroutineId)
 	}
@@ -218,7 +218,7 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 	wait := waitTime.Milliseconds()
 	current := time.Now().UnixMilli()
-	goroutineId, err := GetId()
+	goroutineId, err := getId()
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 }
 
 func (m *goRedissonBaseLock) Unlock() error {
-	goroutineId, err := GetId()
+	goroutineId, err := getId()
 	if err != nil {
 		return err
 	}

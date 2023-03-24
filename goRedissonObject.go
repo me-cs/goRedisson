@@ -25,6 +25,6 @@ func (m *goRedissonObject) getRawName() string {
 	return m.name
 }
 
-func NewGoRedissonObject(name string) *goRedissonObject {
+func newGoRedissonObject(name string) *goRedissonObject {
 	return &goRedissonObject{name: name}
 }

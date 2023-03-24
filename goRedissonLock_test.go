@@ -77,7 +77,7 @@ func TestMutex_LockUnlock(t *testing.T) {
 func TestMultiMutex(t *testing.T) {
 	testCases := []int32{1, 10, 100, 200}
 	id := 0
-	getId := func() int {
+	getVariableId := func() int {
 		id++
 		return id
 	}
@@ -88,7 +88,7 @@ func TestMultiMutex(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := singleLockUnlockTest(10, fmt.Sprintf("variable_%d", getId()), getGodisson())
+				err := singleLockUnlockTest(10, fmt.Sprintf("variable_%d", getVariableId()), getGodisson())
 				if err != nil {
 					t.Logf("test failed,err=%v", err)
 					atomic.AddInt32(&numOfFailures, 1)
