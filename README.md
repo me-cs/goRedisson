@@ -3,7 +3,7 @@
 *Redisson golang implementation*
 
 ## Description
-TODO
+redis mutex rwmutex golang implementation with watchdog
 
 ### Example use:
 
