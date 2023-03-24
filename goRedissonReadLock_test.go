@@ -1,6 +1,9 @@
 package goRedisson
 
 import (
+	"math/rand"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -141,4 +144,27 @@ func TestRRLock(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestReadLock(t *testing.T) {
+	g := getGodisson()
+	key := strconv.FormatInt(int64(rand.Int31n(1000000)), 10)
+	l := g.GetReadWriteLock(key)
+	innerWg := sync.WaitGroup{}
+	for i := 0; i < 200; i++ {
+		innerWg.Add(1)
+		go func() {
+			defer innerWg.Done()
+			err := l.ReadLock().TryLock(4 * time.Second)
+			if err != nil {
+				panic(err)
+			}
+			err = l.ReadLock().Unlock()
+			if err != nil {
+				panic(err)
+			}
+		}()
+	}
+	innerWg.Wait()
+
 }

@@ -1,6 +1,7 @@
 package goRedisson
 
 import (
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -29,15 +30,15 @@ func NewGoRedisson(redisClient *redis.Client, opts ...OptionFunc) *GoRedisson {
 
 type OptionFunc func(g *GoRedisson)
 
-//func WithWatchDogTimeout(t time.Duration) OptionFunc {
-//	return func(g *GoRedisson) {
-//		if t.Seconds() < 30 {
-//			t = DefaultWatchDogTimeout
-//			log.Println("watchDogTimeout is too small, so config default ")
-//		}
-//		g.watchDogTimeout = t
-//	}
-//}
+func WithWatchDogTimeout(t time.Duration) OptionFunc {
+	return func(g *GoRedisson) {
+		if t.Seconds() < 30 {
+			t = DefaultWatchDogTimeout
+			log.Println("watchDogTimeout is too small, so config default ")
+		}
+		g.watchDogTimeout = t
+	}
+}
 
 func (g *GoRedisson) GetLock(key string) Lock {
 	return NewRedisLock(key, g)
