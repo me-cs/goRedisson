@@ -93,3 +93,21 @@ return nil;
 		return nil, fmt.Errorf("unlock result converter to bool error, value is %v", result)
 	}
 }
+
+func (m *goRedissonLock) renewExpirationInner(goroutineId uint64) (int64, error) {
+	result, err := m.goRedisson.client.Eval(context.TODO(), `
+if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
+	redis.call('pexpire', KEYS[1], ARGV[1]);
+	return 1;
+end;
+return 0;
+`, []string{m.getRawName()}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+	if err != nil {
+		return 0, err
+	}
+	if b, ok := result.(int64); ok {
+		return b, nil
+	} else {
+		return 0, fmt.Errorf("try lock result converter to int64 error, value is %v", result)
+	}
+}

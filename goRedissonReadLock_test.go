@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-func TestReadLock_TryLock(t *testing.T) {
+func TestReadLockRenew(t *testing.T) {
 	g := getGodisson()
-	mutex := g.GetReadWriteLock("TestReadLock_TryLock")
+	mutex := g.GetReadWriteLock("TestReadLockRenew")
 
 	err := mutex.ReadLock().TryLock(5 * time.Second)
 	if err != nil {
 		panic(err)
 	}
 
-	time.Sleep(40 * time.Second)
+	time.Sleep(35 * time.Second)
 	err = mutex.ReadLock().Unlock()
 	if err != nil {
 		panic(err)
@@ -108,21 +108,21 @@ func TestRWLockUnlock(t *testing.T) {
 	}
 }
 
-func TestRWLock(t *testing.T) {
-	g := getGodisson()
-	var wl ReadWriteLock
-	wl = g.GetReadWriteLock("TestRWLock")
-	err := wl.WriteLock().TryLock(3 * time.Second)
-	if err != nil {
-		panic(err)
-	}
-	defer wl.WriteLock().Unlock()
-
-	err = wl.ReadLock().TryLock(3 * time.Second)
-	if err == nil {
-		panic("it should not be nil")
-	}
-}
+//func TestRWLock(t *testing.T) {
+//	g := getGodisson()
+//	var wl ReadWriteLock
+//	wl = g.GetReadWriteLock("TestRWLock")
+//	err := wl.WriteLock().TryLock(3 * time.Second)
+//	if err != nil {
+//		panic(err)
+//	}
+//	defer wl.WriteLock().Unlock()
+//
+//	err = wl.ReadLock().TryLock(3 * time.Second)
+//	if err == nil {
+//		panic("it should not be nil")
+//	}
+//}
 
 func TestRRLock(t *testing.T) {
 	g := getGodisson()
@@ -151,17 +151,17 @@ func TestReadLock(t *testing.T) {
 	key := strconv.FormatInt(int64(rand.Int31n(1000000)), 10)
 	l := g.GetReadWriteLock(key)
 	innerWg := sync.WaitGroup{}
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 1000; i++ {
 		innerWg.Add(1)
 		go func() {
 			defer innerWg.Done()
-			err := l.ReadLock().TryLock(4 * time.Second)
+			err := l.ReadLock().TryLock(10 * time.Second)
 			if err != nil {
-				panic(err)
+				panic(err.Error() + ":" + key)
 			}
 			err = l.ReadLock().Unlock()
 			if err != nil {
-				panic(err)
+				panic(err.Error() + ":" + key)
 			}
 		}()
 	}

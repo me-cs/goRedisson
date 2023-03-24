@@ -2,7 +2,6 @@ package goRedisson
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -13,23 +12,23 @@ import (
 
 func getGodisson() *GoRedisson {
 	redisDB := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "200.200.107.249:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
 	return NewGoRedisson(redisDB)
 }
 
-func TestMutex_TryLock(t *testing.T) {
+func TestMutexRenew(t *testing.T) {
 	g := getGodisson()
-	mutex := g.GetLock("TestMutex_TryLock")
+	mutex := g.GetLock("TestMutexRenew")
 
 	err := mutex.TryLock(5 * time.Second)
 	if err != nil {
 		panic(err)
 	}
 
-	time.Sleep(40 * time.Second)
+	time.Sleep(45 * time.Second)
 	err = mutex.Unlock()
 	if err != nil {
 		panic(err)
@@ -59,7 +58,6 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 		}()
 	}
 	wg.Wait()
-	log.Println(variableName, "=", a)
 	if int32(a) != total {
 		return fmt.Errorf("mutex lock and unlock test failed, %s shoule equal %d,but equal %d", variableName, total, a)
 	}
@@ -70,7 +68,7 @@ func TestMutex_LockUnlock(t *testing.T) {
 	testCase := []int32{1, 10, 100, 200, 300, 330}
 	for _, v := range testCase {
 		if err := singleLockUnlockTest(v, "variable_1", getGodisson()); err != nil {
-			log.Fatalf("err=%v", err)
+			t.Fatalf("err=%v", err)
 		}
 	}
 }
@@ -91,7 +89,6 @@ func TestMultiMutex(t *testing.T) {
 				defer wg.Done()
 				err := singleLockUnlockTest(10, fmt.Sprintf("variable_%d", getVariableId()), getGodisson())
 				if err != nil {
-					t.Logf("test failed,err=%v", err)
 					atomic.AddInt32(&numOfFailures, 1)
 					return
 				}

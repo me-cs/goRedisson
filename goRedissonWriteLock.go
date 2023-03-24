@@ -17,8 +17,8 @@ func (m *goRedissonWriteLock) getChannelName() string {
 	return m.prefixName("go_redisson_rwlock", m.getRawName())
 }
 
-func (m *goRedissonWriteLock) getReadLockName(goroutineId uint64) string {
-	return m.getLockName(goroutineId) + ":write"
+func (m *goRedissonWriteLock) getLockName(goroutineId uint64) string {
+	return m.goRedissonBaseLock.getLockName(goroutineId) + ":write"
 }
 
 func newRedisWriteLock(name string, goRedisson *GoRedisson) Lock {
@@ -91,7 +91,7 @@ if (mode == 'write') then
    end;
 end;
 return nil;
-`, []string{m.getRawName(), m.getChannelName()}, unlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName(), m.getChannelName()}, readUnlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil

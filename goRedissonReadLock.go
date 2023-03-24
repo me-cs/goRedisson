@@ -31,40 +31,6 @@ func (m *goRedissonReadLock) getReadWriteTimeoutNamePrefix(goroutineId uint64) s
 	return m.suffixName(m.getRawName(), m.getLockName(goroutineId)) + ":rwlock_timeout"
 }
 
-func (m *goRedissonReadLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
-	if leaseTime > 0 {
-		return m.tryLockInner(waitTime, leaseTime, goroutineId)
-	}
-	ttl, err := m.tryLockInner(waitTime, m.internalLockLeaseTime, goroutineId)
-	if err != nil {
-		return nil, err
-	}
-	// lock acquired
-	if ttl == nil {
-		if leaseTime > 0 {
-			m.internalLockLeaseTime = leaseTime
-		} else {
-			m.scheduleExpirationRenewal(goroutineId)
-		}
-	}
-	return ttl, nil
-}
-
-func (m *goRedissonReadLock) Unlock() error {
-	goroutineId, err := getId()
-	if err != nil {
-		return err
-	}
-	opStatus, err := m.unlockInner(goroutineId)
-	if err != nil {
-		return err
-	}
-	if opStatus == nil {
-		return fmt.Errorf("attempt to unlock lock, not locked by current thread by node id: %s goroutine-id: %d", m.id, goroutineId)
-	}
-	return nil
-}
-
 func (m *goRedissonReadLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(context.Background(), `
 local mode = redis.call('hget', KEYS[1], 'mode');

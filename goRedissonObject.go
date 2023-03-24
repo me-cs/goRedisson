@@ -18,7 +18,7 @@ func (m *goRedissonObject) suffixName(name, suffix string) string {
 	if strings.Contains(name, "{") {
 		return name + ":" + suffix
 	}
-	return "{" + name + "}" + suffix
+	return "{" + name + "}:" + suffix
 }
 
 func (m *goRedissonObject) getRawName() string {

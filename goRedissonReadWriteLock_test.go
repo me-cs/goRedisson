@@ -13,15 +13,15 @@ func TestReadWriteLock(t *testing.T) {
 	l := getGodisson().GetReadWriteLock("TestReadWriteLock")
 	a := 0
 	wg := sync.WaitGroup{}
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		innerWg := sync.WaitGroup{}
-		for i := 0; i < 300; i++ {
+		for i := 0; i < 200; i++ {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.WriteLock().TryLock(4 * time.Second)
+				err := l.WriteLock().TryLock(15 * time.Second)
 				if err != nil {
 					panic(err)
 				}
@@ -34,15 +34,64 @@ func TestReadWriteLock(t *testing.T) {
 		}
 		innerWg.Wait()
 	}()
+
+	go func() {
+		defer wg.Done()
+		innerWg := sync.WaitGroup{}
+		for i := 0; i < 100; i++ {
+			innerWg.Add(1)
+			go func() {
+				defer innerWg.Done()
+				err := l.ReadLock().TryLock(15 * time.Second)
+				if err != nil {
+					panic(err)
+				}
+				err = l.ReadLock().Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+		innerWg.Wait()
+	}()
+
 	wg.Wait()
-	if a != 300 {
+	if a != 200 {
 		panic(a)
 	}
 }
 
+func TestReadWriteLockFailFast(t *testing.T) {
+	l := getGodisson().GetReadWriteLock("TestReadWriteLockFailFast")
+	a := 0
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		innerWg := sync.WaitGroup{}
+		for i := 0; i < 500; i++ {
+			innerWg.Add(1)
+			go func() {
+				defer innerWg.Done()
+				err := l.WriteLock().TryLock(3 * time.Second)
+				if err != nil {
+					return
+				}
+				a++
+				err = l.WriteLock().Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+		innerWg.Wait()
+	}()
+	wg.Wait()
+}
+
 func TestRWMutex(t *testing.T) {
 	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(-1))
-	n := 5
+	n := 100
 	if testing.Short() {
 		n = 5
 	}
