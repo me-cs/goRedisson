@@ -12,23 +12,23 @@ var (
 type goRedissonReadWriteLock struct {
 	*goRedissonExpirable
 	goRedisson *GoRedisson
-	rlock      Lock
-	wlock      Lock
+	rLock      Lock
+	wLock      Lock
 }
 
 func (m *goRedissonReadWriteLock) ReadLock() Lock {
-	return m.rlock
+	return m.rLock
 }
 
 func (m *goRedissonReadWriteLock) WriteLock() Lock {
-	return m.wlock
+	return m.wLock
 }
 
 func NewRedisReadWriteLock(name string, redisson *GoRedisson) ReadWriteLock {
 	return &goRedissonReadWriteLock{
 		goRedissonExpirable: NewGoRedissonExpirable(name),
 		goRedisson:          redisson,
-		rlock:               NewReadLock(name, redisson),
-		wlock:               NewRedisWriteLock(name, redisson),
+		rLock:               NewReadLock(name, redisson),
+		wLock:               NewRedisWriteLock(name, redisson),
 	}
 }

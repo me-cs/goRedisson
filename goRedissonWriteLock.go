@@ -21,7 +21,7 @@ func (m *goRedissonWriteLock) getReadLockName(goroutineId uint64) string {
 	return m.getLockName(goroutineId) + ":write"
 }
 
-func NewRedisWriteLock(name string, goRedisson *GoRedisson) *goRedissonWriteLock {
+func NewRedisWriteLock(name string, goRedisson *GoRedisson) Lock {
 	redisWriteLock := &goRedissonWriteLock{}
 	redisWriteLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, redisWriteLock)
 	return redisWriteLock

@@ -13,7 +13,7 @@ type goRedissonReadLock struct {
 	goRedissonBaseLock
 }
 
-func NewReadLock(name string, goRedisson *GoRedisson) *goRedissonReadLock {
+func NewReadLock(name string, goRedisson *GoRedisson) Lock {
 	goRedissonReadLock := &goRedissonReadLock{}
 	goRedissonReadLock.goRedissonBaseLock = *NewBaseLock(goRedisson.id, name, goRedisson, goRedissonReadLock)
 	return goRedissonReadLock

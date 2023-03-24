@@ -9,6 +9,7 @@ type InnerLocker interface {
 	renewExpirationInner(uint64) (int64, error)
 }
 
+// A Lock represents an object that can be locked and unlocked.
 type Lock interface {
 	TryLock(time.Duration) error
 	Unlock() error
