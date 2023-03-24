@@ -11,7 +11,7 @@ TODO
 package main
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 	"github.com/me-cs/goRedisson"
 	"log"
 	"time"
