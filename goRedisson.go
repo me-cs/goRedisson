@@ -1,9 +1,10 @@
 package goRedisson
 
 import (
+	"time"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/satori/go.uuid"
-	"time"
 )
 
 type GoRedisson struct {
@@ -44,16 +45,4 @@ func (g *GoRedisson) GetLock(key string) Lock {
 
 func (g *GoRedisson) GetReadWriteLock(key string) ReadWriteLock {
 	return NewRedisReadWriteLock(key, g)
-}
-
-func (g *GoRedisson) GetAtomicDouble(key string) AtomicDouble {
-	return NewGoRedissonAtomicDouble(g, key)
-}
-
-func (g *GoRedisson) GetAtomicLong(key string) AtomicLong {
-	return NewGoRedissonAtomicLong(g, key)
-}
-
-func (g *GoRedisson) GetBitSet(key string) BitSet {
-	return NewGoRedissonBitSet(g, key)
 }

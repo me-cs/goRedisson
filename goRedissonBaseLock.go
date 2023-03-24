@@ -178,7 +178,7 @@ func (m *goRedissonBaseLock) renewExpiration() {
 			if goroutineId == nil {
 				return
 			}
-			res, err := m.renewExpirationInner(*goroutineId)
+			res, err := m.lock.renewExpirationInner(*goroutineId)
 			if err != nil {
 				m.ExpirationRenewalMap.Delete(entryName)
 				return

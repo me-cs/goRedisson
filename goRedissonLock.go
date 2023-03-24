@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 var (
@@ -30,6 +33,7 @@ func NewRedisLock(name string, goRedisson *GoRedisson) *goRedissonLock {
 }
 
 func (m *goRedissonLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+	log.Print("ffff")
 	result, err := m.goRedisson.client.Eval(context.Background(), `
 if (redis.call('exists', KEYS[1]) == 0) then
 	redis.call('hincrby', KEYS[1], ARGV[2], 1);
@@ -44,7 +48,7 @@ end;
 return redis.call('pttl', KEYS[1]);
 `, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
@@ -75,7 +79,7 @@ end;
 return nil;
 `, []string{m.getRawName(), m.getChannelName()}, UNLOCK_MESSAGE, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err

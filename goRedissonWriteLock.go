@@ -3,7 +3,10 @@ package goRedisson
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type goRedissonWriteLock struct {
@@ -44,7 +47,7 @@ end;
 return redis.call('pttl', KEYS[1]);
 `, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
@@ -90,7 +93,7 @@ end;
 return nil;
 `, []string{m.getRawName(), m.getChannelName()}, UNLOCK_MESSAGE, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
@@ -100,5 +103,48 @@ return nil;
 		return &b, nil
 	} else {
 		return nil, fmt.Errorf("unlock result converter to bool error, value is %v", result)
+	}
+}
+
+func (m *goRedissonWriteLock) getKeyPrefix(goroutineId uint64, timeoutPrefix string) string {
+	return strings.Split(timeoutPrefix, ":"+m.getLockName(goroutineId))[0]
+}
+
+func (m *goRedissonWriteLock) getReadWriteTimeoutNamePrefix(goroutineId uint64) string {
+	return m.suffixName(m.getRawName(), m.getLockName(goroutineId)) + ":rwlock_timeout"
+}
+
+func (m *goRedissonWriteLock) renewExpirationInner(goroutineId uint64) (int64, error) {
+	timeoutPrefix := m.getReadWriteTimeoutNamePrefix(goroutineId)
+	keyPrefix := m.getKeyPrefix(goroutineId, timeoutPrefix)
+
+	result, err := m.goRedisson.client.Eval(context.TODO(), `
+local counter = redis.call('hget', KEYS[1], ARGV[2]);
+if (counter ~= false) then
+    redis.call('pexpire', KEYS[1], ARGV[1]);
+    
+    if (redis.call('hlen', KEYS[1]) > 1) then
+        local keys = redis.call('hkeys', KEYS[1]); 
+        for n, key in ipairs(keys) do 
+            counter = tonumber(redis.call('hget', KEYS[1], key)); 
+            if type(counter) == 'number' then 
+                for i=counter, 1, -1 do 
+                    redis.call('pexpire', KEYS[2] .. ':' .. key .. ':rwlock_timeout:' .. i, ARGV[1]); 
+                end; 
+            end; 
+        end;
+    end;
+    
+    return 1;
+end;
+return 0;
+`, []string{m.getRawName(), keyPrefix}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+	if err != nil {
+		return 0, err
+	}
+	if b, ok := result.(int64); ok {
+		return b, nil
+	} else {
+		return 0, fmt.Errorf("try lock result converter to int64 error, value is %v", result)
 	}
 }

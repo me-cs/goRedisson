@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type goRedissonReadLock struct {
@@ -87,7 +89,7 @@ return redis.call('pttl', KEYS[1]);
 `, []string{m.getRawName(), m.getReadWriteTimeoutNamePrefix(goroutineId)}, leaseTime.Milliseconds(),
 		m.getLockName(goroutineId), m.getWriteLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
@@ -118,7 +120,7 @@ if (mode == false) then
 end;
 local lockExists = redis.call('hexists', KEYS[1], ARGV[2]);
 if (lockExists == 0) then
-   return nil
+   return nil;
 end;
    
 local counter = redis.call('hincrby', KEYS[1], ARGV[2], -1);
@@ -155,12 +157,11 @@ redis.call('publish', KEYS[2], ARGV[1]);
 return 1; 
 `, []string{m.getRawName(), m.getChannelName(), timeoutPrefix, keyPrefix}, UNLOCK_MESSAGE, m.getLockName(goroutineId)).Result()
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
 	}
-
 	if b, ok := result.(int64); ok {
 		return &b, nil
 	} else {
