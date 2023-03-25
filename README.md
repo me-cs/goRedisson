@@ -2,6 +2,9 @@
 
 *Redisson golang implementation*
 
+[![codecov](https://codecov.io/gh/me-cs/goRedisson/branch/master/graph/badge.svg)](https://codecov.io/gh/me-cs/goRedisson)
+[![Go Report Card](https://goreportcard.com/badge/github.com/me-cs/goRedisson)](https://goreportcard.com/report/github.com/me-cs/goRedisson)
+
 ## Description
 redis mutex rwmutex golang implementation with watchdog
 

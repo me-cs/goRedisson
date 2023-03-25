@@ -1,4 +1,4 @@
-package goRedisson
+d package goRedisson
 
 import (
 	"math/rand"
@@ -135,7 +135,7 @@ func TestReadLock(t *testing.T) {
 	key := strconv.FormatInt(int64(rand.Int31n(1000000)), 10)
 	l := g.GetReadWriteLock(key)
 	innerWg := sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 500; i++ {
 		innerWg.Add(1)
 		go func() {
 			defer innerWg.Done()

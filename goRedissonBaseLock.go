@@ -244,16 +244,18 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 		}
 		currentTime = time.Now().UnixMilli()
 		if *ttl >= 0 && *ttl < wait {
-			tCtx, _ := context.WithTimeout(context.TODO(), time.Duration(*ttl)*time.Millisecond)
+			tCtx, cancel := context.WithTimeout(context.TODO(), time.Duration(*ttl)*time.Millisecond)
 			_, err := sub.ReceiveMessage(tCtx)
+			cancel()
 			if err != nil {
 				//if errors.As(err, &target) {
 				//	continue
 				//}
 			}
 		} else {
-			tCtx, _ := context.WithTimeout(context.TODO(), time.Duration(wait)*time.Millisecond)
+			tCtx, cancel := context.WithTimeout(context.TODO(), time.Duration(wait)*time.Millisecond)
 			_, err := sub.ReceiveMessage(tCtx)
+			cancel()
 			if err != nil {
 				//if errors.As(err, &target) {
 				//	continue
