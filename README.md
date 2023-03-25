@@ -21,7 +21,7 @@ import (
 func main() {
 	// create redis client
 	redisDB := redis.NewClient(&redis.Options{
-		Addr:     "200.200.107.249:6379",
+		Addr:     "localhost:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -51,7 +51,7 @@ func main() {
 
 func testRwMutest() {
 	redisDB := redis.NewClient(&redis.Options{
-		Addr:     "200.200.107.249:6379",
+		Addr:     "localhost:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
