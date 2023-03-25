@@ -11,11 +11,12 @@ redis mutex rwmutex golang implementation with watchdog
 package main
 
 import (
-	"github.com/me-cs/goRedisson"
-	"github.com/redis/go-redis/v9"
 	"log"
 	"sync"
 	"time"
+    
+	"github.com/me-cs/goRedisson"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
