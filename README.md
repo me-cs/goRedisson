@@ -52,11 +52,11 @@ func main() {
 	}
 
 	// or you can use a rwlock
-	testRwMutest()
+	testRwMutex()
 	return
 }
 
-func testRwMutest() {
+func testRwMutex() {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
