@@ -54,6 +54,8 @@ func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 }
 
 func (e *expirationEntry) hasNoThreads() bool {
+	e.Lock()
+	defer e.Unlock()
 	return len(e.goroutineIds) == 0
 }
 
@@ -175,9 +177,9 @@ func (m *goRedissonBaseLock) renewExpiration() {
 			return
 		}
 	}(ctx)
-
+	ee.(*expirationEntry).Lock()
 	ee.(*expirationEntry).cancelFunc = cancel
-
+	ee.(*expirationEntry).Unlock()
 }
 
 func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
@@ -190,10 +192,12 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 		task.removeGoroutineId(goroutineId)
 	}
 	if goroutineId == 0 || task.hasNoThreads() {
+		task.Lock()
 		if task.cancelFunc != nil {
 			task.cancelFunc()
 			task.cancelFunc = nil
 		}
+		task.Unlock()
 		m.ExpirationRenewalMap.Delete(m.getEntryName())
 	}
 }
