@@ -2,6 +2,7 @@ package goRedisson
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -143,5 +144,88 @@ func TestMutexFairness(t *testing.T) {
 	case <-done:
 	case <-time.After(10 * time.Second):
 		t.Fatalf("can't acquire Mutex in 10 seconds")
+	}
+}
+
+func benchmarkMutex(b *testing.B, slack, work bool) {
+	mu := getGodisson().GetLock("benchmarkMutex")
+	if slack {
+		b.SetParallelism(10)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		foo := 0
+		for pb.Next() {
+			err := mu.TryLock(5 * time.Second)
+			if err != nil {
+				panic(err)
+			}
+			err = mu.Unlock()
+			if err != nil {
+				panic(err)
+			}
+			if work {
+				for i := 0; i < 100; i++ {
+					foo *= 2
+					foo /= 2
+				}
+			}
+		}
+		_ = foo
+	})
+}
+
+func BenchmarkMutex(b *testing.B) {
+	benchmarkMutex(b, false, false)
+}
+
+func BenchmarkMutexSlack(b *testing.B) {
+	benchmarkMutex(b, true, false)
+}
+
+func BenchmarkMutexWork(b *testing.B) {
+	benchmarkMutex(b, false, true)
+}
+
+func BenchmarkMutexWorkSlack(b *testing.B) {
+	benchmarkMutex(b, true, true)
+}
+
+func HammerMutex(m Lock, loops int, cdone chan bool) {
+	for i := 0; i < loops; i++ {
+		if i%3 == 0 {
+			if m.TryLock(time.Second) == nil {
+				err := m.Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}
+			continue
+		}
+		err := m.TryLock(time.Second)
+		if err != nil {
+			panic(err)
+		}
+		err = m.Unlock()
+		if err != nil {
+			panic(err)
+		}
+	}
+	cdone <- true
+}
+
+func TestMutex(t *testing.T) {
+	if n := runtime.SetMutexProfileFraction(1); n != 0 {
+		t.Logf("got mutexrate %d expected 0", n)
+	}
+	defer runtime.SetMutexProfileFraction(0)
+
+	m := getGodisson().GetLock("TestMutex")
+
+	c := make(chan bool)
+	for i := 0; i < 10; i++ {
+		go HammerMutex(m, 1000, c)
+	}
+	for i := 0; i < 10; i++ {
+		<-c
 	}
 }
