@@ -1,4 +1,4 @@
-d package goRedisson
+package goRedisson
 
 import (
 	"math/rand"
