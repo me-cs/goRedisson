@@ -80,6 +80,28 @@ func TestWithWatchDogTimeout(t *testing.T) {
 
 }
 
+func TestWithWatchDogTimeout2(t *testing.T) {
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	g := NewGoRedisson(redisDB, WithWatchDogTimeout(time.Second))
+	mutex := g.GetLock("TestMutexRenew")
+
+	err := mutex.TryLock(5 * time.Second)
+	if err != nil {
+		panic(err)
+	}
+
+	time.Sleep(15 * time.Second)
+	err = mutex.Unlock()
+	if err != nil {
+		panic(err)
+	}
+
+}
+
 func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error {
 	mutex := g.GetLock("plus_" + variableName)
 	a := 0
