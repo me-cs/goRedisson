@@ -13,7 +13,7 @@ func TestWriteLockRenew(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	time.Sleep(35 * time.Second)
+	time.Sleep(15 * time.Second)
 	err = mutex.WriteLock().Unlock()
 	if err != nil {
 		panic(err)

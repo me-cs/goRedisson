@@ -17,7 +17,7 @@ func TestReadLockRenew(t *testing.T) {
 		panic(err)
 	}
 
-	time.Sleep(35 * time.Second)
+	time.Sleep(15 * time.Second)
 	err = mutex.ReadLock().Unlock()
 	if err != nil {
 		panic(err)

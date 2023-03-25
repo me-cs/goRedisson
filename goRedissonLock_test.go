@@ -11,9 +11,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const (
+	redisAddr = "localhost:6379"
+)
+
 func getGodisson() *GoRedisson {
 	redisDB := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisAddr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -29,7 +33,46 @@ func TestMutexRenew(t *testing.T) {
 		panic(err)
 	}
 
-	time.Sleep(45 * time.Second)
+	time.Sleep(15 * time.Second)
+	err = mutex.Unlock()
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func TestMutexRenewTwice(t *testing.T) {
+	g := getGodisson()
+	mutex := g.GetLock("TestMutexRenew")
+
+	err := mutex.TryLock(5 * time.Second)
+	if err != nil {
+		panic(err)
+	}
+
+	time.Sleep(25 * time.Second)
+	err = mutex.Unlock()
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func TestWithWatchDogTimeout(t *testing.T) {
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	g := NewGoRedisson(redisDB, WithWatchDogTimeout(time.Second*39))
+	mutex := g.GetLock("TestMutexRenew")
+
+	err := mutex.TryLock(5 * time.Second)
+	if err != nil {
+		panic(err)
+	}
+
+	time.Sleep(15 * time.Second)
 	err = mutex.Unlock()
 	if err != nil {
 		panic(err)
