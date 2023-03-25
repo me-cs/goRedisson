@@ -150,5 +150,4 @@ func TestReadLock(t *testing.T) {
 		}()
 	}
 	innerWg.Wait()
-
 }
