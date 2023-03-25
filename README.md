@@ -11,16 +11,17 @@ redis mutex rwmutex golang implementation with watchdog
 package main
 
 import (
-	"github.com/go-redis/redis/v9"
 	"github.com/me-cs/goRedisson"
+	"github.com/redis/go-redis/v9"
 	"log"
+	"sync"
 	"time"
 )
 
 func main() {
 	// create redis client
 	redisDB := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "200.200.107.249:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -37,14 +38,75 @@ func main() {
 
 	//Your business code
 
-
-
 	err = mutex.Unlock()
 	if err != nil {
 		log.Print(err)
 		return
 	}
+
+	// or you can use a rwlock
+	testRwMutest()
 	return
+}
+
+func testRwMutest() {
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     "200.200.107.249:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	defer redisDB.Close()
+
+	g := goRedisson.NewGoRedisson(redisDB)
+	l := g.GetReadWriteLock("testRwMutest")
+	a := 0
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		innerWg := sync.WaitGroup{}
+		for i := 0; i < 100; i++ {
+			innerWg.Add(1)
+			go func() {
+				defer innerWg.Done()
+				err := l.WriteLock().TryLock(15 * time.Second)
+				if err != nil {
+					panic(err)
+				}
+				a++
+				err = l.WriteLock().Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+		innerWg.Wait()
+	}()
+
+	go func() {
+		defer wg.Done()
+		innerWg := sync.WaitGroup{}
+		for i := 0; i < 100; i++ {
+			innerWg.Add(1)
+			go func() {
+				defer innerWg.Done()
+				err := l.ReadLock().TryLock(15 * time.Second)
+				if err != nil {
+					panic(err)
+				}
+				err = l.ReadLock().Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+		innerWg.Wait()
+	}()
+
+	wg.Wait()
+	if a != 100 {
+		panic(a)
+	}
 }
 
 ```
