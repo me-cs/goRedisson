@@ -9,7 +9,6 @@ type goRedissonObject struct {
 func (m *goRedissonObject) prefixName(prefix string, name string) string {
 	if strings.Contains(name, "{") {
 		return prefix + ":" + name
-
 	}
 	return prefix + ":{" + name + "}"
 }
