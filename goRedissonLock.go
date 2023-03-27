@@ -3,7 +3,6 @@ package goRedisson
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,10 +24,6 @@ func (m *goRedissonLock) getChannelName() string {
 	return m.prefixName("redisson_lock__channel", m.getRawName())
 }
 
-func (m *goRedissonLock) lock() error {
-	return m.TryLock(-1)
-}
-
 func newRedisLock(name string, goRedisson *GoRedisson) Lock {
 	redisLock := &goRedissonLock{}
 	redisLock.goRedissonBaseLock = *newBaseLock(goRedisson.id, name, goRedisson, redisLock)
@@ -48,19 +43,14 @@ if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
 	return nil; 
 end; 
 return redis.call('pttl', KEYS[1]);
-`, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	if ttl, ok := result.(int64); ok {
-		return &ttl, nil
-	} else {
-		return nil, fmt.Errorf("tryAcquireInner result converter to int64 error, value is %v", result)
-	}
+	return &result, err
 }
 
 func (m *goRedissonLock) unlockInner(goroutineId uint64) (*int64, error) {
@@ -79,35 +69,22 @@ else
 	return 1; 
 end; 
 return nil;
-`, []string{m.getRawName(), m.getChannelName()}, unlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName(), m.getChannelName()}, unlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	if b, ok := result.(int64); ok {
-		return &b, nil
-	} else {
-		return nil, fmt.Errorf("unlock result converter to bool error, value is %v", result)
-	}
+	return &result, err
 }
 
 func (m *goRedissonLock) renewExpirationInner(goroutineId uint64) (int64, error) {
-	result, err := m.goRedisson.client.Eval(context.TODO(), `
+	return m.goRedisson.client.Eval(context.TODO(), `
 if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
 	redis.call('pexpire', KEYS[1], ARGV[1]);
 	return 1;
 end;
 return 0;
-`, []string{m.getRawName()}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
-	if err != nil {
-		return 0, err
-	}
-	if b, ok := result.(int64); ok {
-		return b, nil
-	} else {
-		return 0, fmt.Errorf("try lock result converter to int64 error, value is %v", result)
-	}
+`, []string{m.getRawName()}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 }

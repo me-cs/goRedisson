@@ -2,7 +2,6 @@ package goRedisson
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -53,19 +52,14 @@ if (mode == 'read') or (mode == 'write' and redis.call('hexists', KEYS[1], ARGV[
 end;
 return redis.call('pttl', KEYS[1]);
 `, []string{m.getRawName(), m.getReadWriteTimeoutNamePrefix(goroutineId)}, leaseTime.Milliseconds(),
-		m.getLockName(goroutineId), m.getWriteLockName(goroutineId)).Result()
+		m.getLockName(goroutineId), m.getWriteLockName(goroutineId)).Int64()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	if ttl, ok := result.(int64); ok {
-		return &ttl, nil
-	} else {
-		return nil, fmt.Errorf("tryAcquireInner result converter to int64 error, value is %v", result)
-	}
+	return &result, err
 }
 
 func (m *goRedissonReadLock) getKeyPrefix(goroutineId uint64, timeoutPrefix string) string {
@@ -121,25 +115,21 @@ end;
 redis.call('del', KEYS[1]);
 redis.call('publish', KEYS[2], ARGV[1]);
 return 1; 
-`, []string{m.getRawName(), m.getChannelName(), timeoutPrefix, keyPrefix}, unlockMessage, m.getLockName(goroutineId)).Result()
+`, []string{m.getRawName(), m.getChannelName(), timeoutPrefix, keyPrefix}, unlockMessage, m.getLockName(goroutineId)).Int64()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
 	}
-	if b, ok := result.(int64); ok {
-		return &b, nil
-	} else {
-		return nil, fmt.Errorf("unlock result converter to bool error, value is %v", result)
-	}
+	return &result, err
 }
 
 func (m *goRedissonReadLock) renewExpirationInner(goroutineId uint64) (int64, error) {
 	timeoutPrefix := m.getReadWriteTimeoutNamePrefix(goroutineId)
 	keyPrefix := m.getKeyPrefix(goroutineId, timeoutPrefix)
 
-	result, err := m.goRedisson.client.Eval(context.TODO(), `
+	return m.goRedisson.client.Eval(context.TODO(), `
 local counter = redis.call('hget', KEYS[1], ARGV[2]);
 if (counter ~= false) then
     redis.call('pexpire', KEYS[1], ARGV[1]);
@@ -159,13 +149,5 @@ if (counter ~= false) then
     return 1;
 end;
 return 0;
-`, []string{m.getRawName(), keyPrefix}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Result()
-	if err != nil {
-		return 0, err
-	}
-	if b, ok := result.(int64); ok {
-		return b, nil
-	} else {
-		return 0, fmt.Errorf("try lock result converter to int64 error, value is %v", result)
-	}
+`, []string{m.getRawName(), keyPrefix}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 }

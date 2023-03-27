@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	redisAddr = "localhost:6379"
+	redisAddr = "200.200.107.249:6379"
 )
 
 func getGodisson() *GoRedisson {
