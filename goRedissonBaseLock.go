@@ -105,21 +105,14 @@ func (m *goRedissonBaseLock) getEntryName() string {
 	return m.entryName
 }
 
-func (m *goRedissonBaseLock) tryAcquire(waitTime, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
-	if leaseTime > 0 {
-		return m.lock.tryLockInner(waitTime, leaseTime, goroutineId)
-	}
+func (m *goRedissonBaseLock) tryAcquire(waitTime time.Duration, goroutineId uint64) (*int64, error) {
 	ttl, err := m.lock.tryLockInner(waitTime, m.internalLockLeaseTime, goroutineId)
 	if err != nil {
 		return nil, err
 	}
 	// lock acquired
 	if ttl == nil {
-		if leaseTime > 0 {
-			m.internalLockLeaseTime = leaseTime
-		} else {
-			m.scheduleExpirationRenewal(goroutineId)
-		}
+		m.scheduleExpirationRenewal(goroutineId)
 	}
 	return ttl, nil
 }
@@ -209,7 +202,7 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 	if err != nil {
 		return err
 	}
-	ttl, err := m.tryAcquire(waitTime, -1, goroutineId)
+	ttl, err := m.tryAcquire(waitTime, goroutineId)
 	if err != nil {
 		return err
 	}
@@ -234,7 +227,7 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 
 	for {
 		currentTime := time.Now().UnixMilli()
-		ttl, err = m.tryAcquire(waitTime, -1, goroutineId)
+		ttl, err = m.tryAcquire(waitTime, goroutineId)
 		if err != nil {
 			return err
 		}
