@@ -294,3 +294,41 @@ func TestMutex(t *testing.T) {
 		<-c
 	}
 }
+
+func TestUnlockWithoutLocking(t *testing.T) {
+	mutex := getGodisson().GetLock("TestUnlockWithoutLocking")
+	err := mutex.TryLock(time.Second)
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		err := mutex.Unlock()
+		if err == nil {
+			panic("it should not be nil")
+		}
+	}()
+	time.Sleep(1 * time.Second)
+	err = mutex.Unlock()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestRedisConnFailure(t *testing.T) {
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	g := NewGoRedisson(redisDB)
+	_ = redisDB.Close()
+	mutex := g.GetLock("TestRedisConnFailure")
+	err := mutex.TryLock(time.Second)
+	if err == nil {
+		panic("it should not be nil")
+	}
+	err = mutex.Unlock()
+	if err == nil {
+		panic("it should not be nil")
+	}
+}
