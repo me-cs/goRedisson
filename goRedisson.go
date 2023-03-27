@@ -14,6 +14,8 @@ type GoRedisson struct {
 	id              string
 }
 
+// DefaultWatchDogTimeout
+// The default watchdog timeout, the watchdog will go every 1/3 of the DefaultWatchDogTimeout to renew the lock held by the current thread.
 var DefaultWatchDogTimeout = 30 * time.Second
 
 func NewGoRedisson(redisClient *redis.Client, opts ...OptionFunc) *GoRedisson {

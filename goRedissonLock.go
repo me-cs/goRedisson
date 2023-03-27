@@ -13,6 +13,7 @@ var (
 )
 
 var (
+	// ErrObtainLockTimeout indicates that Lock cannot be acquired within waitTime
 	ErrObtainLockTimeout = errors.New("obtained lock timeout")
 )
 
