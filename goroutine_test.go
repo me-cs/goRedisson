@@ -135,3 +135,20 @@ func TestParseUintBytesBase(t *testing.T) {
 		}
 	}
 }
+
+func TestParseUintBytes0BitSize(t *testing.T) {
+	for i := range parseUint64Tests {
+		test := &parseUint64Tests[i]
+		out, err := parseUintBytes(test.in, 10, 0)
+		if test.out != out || !reflect.DeepEqual(test.err, err) {
+			t.Errorf("ParseUint(%q, 10, 0) = %v, %v want %v, %v",
+				test.in, out, err, test.out, test.err)
+		}
+	}
+}
+
+func TestCutoff64(t *testing.T) {
+	if cutoff64(1) != 0 {
+		panic("cutoff64(1)!=0")
+	}
+}
