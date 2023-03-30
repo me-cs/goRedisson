@@ -3,6 +3,7 @@ package goRedisson
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -56,6 +57,29 @@ func TestMutexRenewTwice(t *testing.T) {
 		panic(err)
 	}
 
+}
+
+func TestMutexRenewTogether(t *testing.T) {
+	g := getGodisson()
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		ind := i
+		go func() {
+			defer wg.Done()
+			mutex := g.GetLock("TestMutexRenew" + strconv.Itoa(ind))
+			err := mutex.TryLock(5 * time.Second)
+			if err != nil {
+				panic(err)
+			}
+			time.Sleep(15 * time.Second)
+			err = mutex.Unlock()
+			if err != nil {
+				panic(err)
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func TestWithWatchDogTimeout(t *testing.T) {
