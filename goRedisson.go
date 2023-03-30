@@ -9,9 +9,12 @@ import (
 )
 
 type GoRedisson struct {
-	client          *redis.Client
+	// client redis client
+	client *redis.Client
+	//watchDogTimeout timeout for watchdog
 	watchDogTimeout time.Duration
-	id              string
+	//id goRedisson unique uuid
+	id string
 }
 
 // DefaultWatchDogTimeout
@@ -42,10 +45,14 @@ func WithWatchDogTimeout(t time.Duration) OptionFunc {
 	}
 }
 
+//GetLock returns a Lock named "key" which can be used to lock and unlock the resource "key".
+//A Lock can be copied after first use, but most of the time it is advisable to keep instances of Lock.
 func (g *GoRedisson) GetLock(key string) Lock {
 	return newRedisLock(key, g)
 }
 
+//GetReadWriteLock returns a ReadWriteLock named "key" which can be used to lock and unlock the resource "key" when reading or writing.
+//A ReadWriteLock can be copied after first use, but most of the time it is advisable to keep instances of ReadWriteLock.
 func (g *GoRedisson) GetReadWriteLock(key string) ReadWriteLock {
 	return newRedisReadWriteLock(key, g)
 }

@@ -12,14 +12,16 @@ var (
 type goRedissonReadWriteLock struct {
 	*goRedissonExpirable
 	goRedisson *GoRedisson
-	rLock      Lock
-	wLock      Lock
+	rLock      Lock //the readLock instance
+	wLock      Lock //the writeLock instance
 }
 
+// ReadLock return a readLock that can locks/unlocks for reading.
 func (m *goRedissonReadWriteLock) ReadLock() Lock {
 	return m.rLock
 }
 
+// WriteLock return a writeLock that can locks/unlocks for writing.
 func (m *goRedissonReadWriteLock) WriteLock() Lock {
 	return m.wLock
 }
