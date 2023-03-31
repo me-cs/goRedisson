@@ -1,6 +1,6 @@
 # goRedisson
 
-*Redisson go implementation*
+*Redisson go语言实现*
 
 [![Go](https://github.com/me-cs/goRedisson/workflows/Go/badge.svg?branch=main)](https://github.com/me-cs/goRedisson/actions)
 [![codecov](https://codecov.io/gh/me-cs/goRedisson/branch/main/graph/badge.svg)](https://codecov.io/gh/me-cs/goRedisson)
@@ -9,11 +9,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
-redis mutex rwmutex go implementation with watchdog
+带有看门狗的 redis 互斥锁/读写锁 的go语言实现
 
-English | [简体中文](README-CN.md)
 
-### Example use:
+### 示例:
 
 ```go
 package main
@@ -28,7 +27,7 @@ import (
 )
 
 func main() {
-	// create redis client
+	// 创建redis 客户端
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -45,7 +44,7 @@ func main() {
 		return
 	}
 
-	//Your business code
+	//你的业务代码
 
 	err = mutex.Unlock()
 	if err != nil {
@@ -53,7 +52,7 @@ func main() {
 		return
 	}
 
-	// or you can use a rwlock
+	// 或者你也可是使用读写锁
 	testRwMutex()
 	return
 }
@@ -120,7 +119,7 @@ func testRwMutex() {
 
 ```
 
-## Contributing
-Contributing is done with commit code. There is no help that is too small! :) 
+## 贡献
+贡献是通过提交代码完成的。没有什么帮助是太小的！:)
 
-If you wish to contribute to this project, please branch and issue a pull request against master ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
+如果你想为这个项目做贡献，请在主干线上分支并发出拉动请求 ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
