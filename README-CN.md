@@ -80,7 +80,7 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				ctx,cancel:=context.WithTimeout(context.Background(), 15*time.Second)
+				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 				err := l.WriteLock().TryLock(ctx)
 				if err != nil {
@@ -103,7 +103,7 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				ctx,cancel:=context.WithTimeout(context.Background(), 15*time.Second)
+				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 				err := l.ReadLock().TryLock(ctx)
 				if err != nil {
