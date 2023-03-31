@@ -3,6 +3,7 @@ package goRedisson
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -125,12 +126,6 @@ func (m *goRedissonBaseLock) scheduleExpirationRenewal(goroutineId uint64) {
 	} else {
 		entry.addGoroutineId(goroutineId)
 		m.renewExpiration()
-		//todo
-		// how to impl this code in java with golang?
-		// if (Thread.currentThread().isInterrupted()) {
-		//                    cancelExpirationRenewal(goroutineId);
-		//                }
-		//m.cancelExpirationRenewal(goroutineId)
 	}
 }
 
@@ -245,18 +240,16 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 			_, err := sub.ReceiveMessage(tCtx)
 			cancel()
 			if err != nil {
-				//if errors.As(err, &target) {
-				//	continue
-				//}
+				//we can only print log records, we can't do anything else, let it go to retry or eventually fail.
+				log.Printf("sub.ReceiveMessage failed,err=%v", err)
 			}
 		} else {
 			tCtx, cancel := context.WithTimeout(context.TODO(), time.Duration(wait)*time.Millisecond)
 			_, err := sub.ReceiveMessage(tCtx)
 			cancel()
 			if err != nil {
-				//if errors.As(err, &target) {
-				//	continue
-				//}
+				//we can only print log records, we can't do anything else,let it go to retry or eventually fail.
+				log.Printf("sub.ReceiveMessage failed,err=%v", err)
 			}
 		}
 		wait -= time.Now().UnixMilli() - currentTime
