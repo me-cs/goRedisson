@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// https://github.com/golang/net/blob/master/http2/gotrack.go
 var goroutineSpace = []byte("goroutine ")
 
 func getId() (uint64, error) {
