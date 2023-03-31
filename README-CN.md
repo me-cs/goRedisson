@@ -8,7 +8,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/me-cs/goRedisson.svg)](https://pkg.go.dev/github.com/me-cs/goRedisson)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Description
+## 项目描述
 带有看门狗的 redis 互斥锁/读写锁 的go语言实现
 
 
