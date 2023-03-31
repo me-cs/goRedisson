@@ -1,6 +1,7 @@
 package goRedisson
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -9,7 +10,9 @@ import (
 func TestWriteLockRenew(t *testing.T) {
 	g := getGodisson()
 	mutex := g.GetReadWriteLock("TestWriteLockRenew")
-	err := mutex.WriteLock().TryLock(5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := mutex.WriteLock().TryLock(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +35,9 @@ func testWriteLock(times int) {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.WriteLock().TryLock(15 * time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				err := l.WriteLock().TryLock(ctx)
 				if err != nil {
 					panic(err)
 				}

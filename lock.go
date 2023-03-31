@@ -1,16 +1,22 @@
 package goRedisson
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type innerLocker interface {
-	tryLockInner(time.Duration, time.Duration, uint64) (*int64, error)
-	unlockInner(uint64) (*int64, error)
+	tryLockInner(context.Context, time.Duration, uint64) (*int64, error)
+	unlockInner(context.Context, uint64) (*int64, error)
 	getChannelName() string
-	renewExpirationInner(uint64) (int64, error)
+	renewExpirationInner(context.Context, uint64) (int64, error)
 }
 
 // A Lock represents an object that can be locked and unlocked.
 type Lock interface {
-	TryLock(time.Duration) error
+	Lock() error
 	Unlock() error
+
+	TryLock(context.Context) error
+	UnlockContext(context.Context) error
 }

@@ -19,6 +19,7 @@ English | [简体中文](README-CN.md)
 package main
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
@@ -39,7 +40,9 @@ func main() {
 	g := goRedisson.NewGoRedisson(redisDB)
 
 	mutex := g.GetLock("example")
-	err := mutex.TryLock(time.Second)
+	ctx,cancel:=context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	err := mutex.TryLock(ctx)
 	if err != nil {
 		log.Print(err)
 		return
@@ -78,7 +81,9 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.WriteLock().TryLock(15 * time.Second)
+				ctx,cancel:=context.WithTimeout(context.Background(), 1*time.Second)
+				defer cancel()
+				err := l.WriteLock().TryLock(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -99,7 +104,9 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.ReadLock().TryLock(15 * time.Second)
+				ctx,cancel:=context.WithTimeout(context.Background(), 1*time.Second)
+				defer cancel()
+				err := l.ReadLock().TryLock(ctx)
 				if err != nil {
 					panic(err)
 				}

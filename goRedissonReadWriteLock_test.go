@@ -1,6 +1,7 @@
 package goRedisson
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"sync"
@@ -21,7 +22,9 @@ func TestReadWriteLock(t *testing.T) {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.WriteLock().TryLock(15 * time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				err := l.WriteLock().TryLock(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -42,7 +45,9 @@ func TestReadWriteLock(t *testing.T) {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.ReadLock().TryLock(15 * time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				err := l.ReadLock().TryLock(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -73,7 +78,9 @@ func TestReadWriteLockFailFast(t *testing.T) {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				err := l.WriteLock().TryLock(3 * time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				defer cancel()
+				err := l.WriteLock().TryLock(ctx)
 				if err != nil {
 					return
 				}
@@ -109,7 +116,9 @@ func TestRWMutex(t *testing.T) {
 
 func writer(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan bool) {
 	for i := 0; i < num_iterations; i++ {
-		err := rwm.WriteLock().TryLock(10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err := rwm.WriteLock().TryLock(ctx)
+		cancel()
 		if err != nil {
 			panic(err)
 		}
@@ -134,7 +143,9 @@ func writer(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan b
 
 func reader(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan bool) {
 	for i := 0; i < num_iterations; i++ {
-		err := rwm.ReadLock().TryLock(10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err := rwm.ReadLock().TryLock(ctx)
+		cancel()
 		if err != nil {
 			panic(err)
 		}
@@ -162,7 +173,7 @@ func HammerRWMutex(gomaxprocs, numReaders, num_iterations int) {
 	// Number of active readers + 10000 * number of active writers.
 	var activity int32
 	var rwm ReadWriteLock
-	rwm = getGodisson().GetReadWriteLock("hello3")
+	rwm = getGodisson().GetReadWriteLock("HammerRWMutex")
 	cdone := make(chan bool)
 	go writer(rwm, num_iterations, &activity, cdone)
 	var i int

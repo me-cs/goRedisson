@@ -3,7 +3,6 @@ package goRedisson
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -106,8 +105,8 @@ func (m *goRedissonBaseLock) getEntryName() string {
 	return m.entryName
 }
 
-func (m *goRedissonBaseLock) tryAcquire(waitTime time.Duration, goroutineId uint64) (*int64, error) {
-	ttl, err := m.lock.tryLockInner(waitTime, m.internalLockLeaseTime, goroutineId)
+func (m *goRedissonBaseLock) tryAcquire(ctx context.Context, goroutineId uint64) (*int64, error) {
+	ttl, err := m.lock.tryLockInner(ctx, m.internalLockLeaseTime, goroutineId)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func (m *goRedissonBaseLock) renewExpiration() {
 			if goroutineId == nil {
 				return
 			}
-			res, err := m.lock.renewExpirationInner(*goroutineId)
+			res, err := m.lock.renewExpirationInner(ctx, *goroutineId)
 			if err != nil {
 				m.ExpirationRenewalMap.Delete(entryName)
 				return
@@ -190,39 +189,32 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	}
 }
 
-func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
-	wait := waitTime.Milliseconds()
-	current := time.Now().UnixMilli()
+func (m *goRedissonBaseLock) Lock() error {
+	return m.TryLock(context.Background())
+}
+
+func (m *goRedissonBaseLock) TryLock(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
 		return err
 	}
-	ttl, err := m.tryAcquire(waitTime, goroutineId)
-	if err != nil {
-		return err
-	}
-	// lock acquired
-	if ttl == nil {
-		return nil
-	}
-	wait -= time.Now().UnixMilli() - current
-	if wait <= 0 {
-		return ErrObtainLockTimeout
-	}
-	current = time.Now().UnixMilli()
 	// PubSub
-	sub := m.goRedisson.client.Subscribe(context.TODO(), m.lock.getChannelName())
+	sub := m.goRedisson.client.Subscribe(ctx, m.lock.getChannelName())
 	defer sub.Close()
 	defer sub.Unsubscribe(context.TODO(), m.lock.getChannelName())
-
-	wait -= time.Now().UnixMilli() - current
-	if wait <= 0 {
-		return ErrObtainLockTimeout
-	}
-
+	ttl := new(int64)
+	// fire
+	*ttl = 0
 	for {
-		currentTime := time.Now().UnixMilli()
-		ttl, err = m.tryAcquire(waitTime, goroutineId)
+		select {
+		// obtain lock timeout
+		case <-ctx.Done():
+			return ErrObtainLockTimeout
+		case <-time.After(time.Duration(*ttl) * time.Millisecond):
+			ttl, err = m.tryAcquire(ctx, goroutineId)
+		case <-sub.Channel():
+			ttl, err = m.tryAcquire(ctx, goroutineId)
+		}
 		if err != nil {
 			return err
 		}
@@ -230,41 +222,19 @@ func (m *goRedissonBaseLock) TryLock(waitTime time.Duration) error {
 		if ttl == nil {
 			return nil
 		}
-		wait -= time.Now().UnixMilli() - currentTime
-		if wait <= 0 {
-			return ErrObtainLockTimeout
-		}
-		currentTime = time.Now().UnixMilli()
-		if *ttl >= 0 && *ttl < wait {
-			tCtx, cancel := context.WithTimeout(context.TODO(), time.Duration(*ttl)*time.Millisecond)
-			_, err := sub.ReceiveMessage(tCtx)
-			cancel()
-			if err != nil {
-				//we can only print log records, we can't do anything else, let it go to retry or eventually fail.
-				log.Printf("sub.ReceiveMessage failed,err=%v", err)
-			}
-		} else {
-			tCtx, cancel := context.WithTimeout(context.TODO(), time.Duration(wait)*time.Millisecond)
-			_, err := sub.ReceiveMessage(tCtx)
-			cancel()
-			if err != nil {
-				//we can only print log records, we can't do anything else,let it go to retry or eventually fail.
-				log.Printf("sub.ReceiveMessage failed,err=%v", err)
-			}
-		}
-		wait -= time.Now().UnixMilli() - currentTime
-		if wait <= 0 {
-			return ErrObtainLockTimeout
-		}
 	}
 }
 
 func (m *goRedissonBaseLock) Unlock() error {
+	return m.UnlockContext(context.Background())
+}
+
+func (m *goRedissonBaseLock) UnlockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
 		return err
 	}
-	opStatus, err := m.lock.unlockInner(goroutineId)
+	opStatus, err := m.lock.unlockInner(ctx, goroutineId)
 	if err != nil {
 		return err
 	}

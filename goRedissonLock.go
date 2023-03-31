@@ -31,8 +31,8 @@ func newRedisLock(name string, goRedisson *GoRedisson) Lock {
 	return redisLock
 }
 
-func (m *goRedissonLock) tryLockInner(_, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
-	result, err := m.goRedisson.client.Eval(context.Background(), `
+func (m *goRedissonLock) tryLockInner(ctx context.Context, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
+	result, err := m.goRedisson.client.Eval(ctx, `
 if (redis.call('exists', KEYS[1]) == 0) then
 	redis.call('hincrby', KEYS[1], ARGV[2], 1);
 	redis.call('pexpire', KEYS[1], ARGV[1]);
@@ -54,9 +54,9 @@ return redis.call('pttl', KEYS[1]);
 	return &result, err
 }
 
-func (m *goRedissonLock) unlockInner(goroutineId uint64) (*int64, error) {
+func (m *goRedissonLock) unlockInner(ctx context.Context, goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
-	result, err := m.goRedisson.client.Eval(context.TODO(), `
+	result, err := m.goRedisson.client.Eval(ctx, `
 if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then 
 	return nil;
 end; 
@@ -80,8 +80,8 @@ return nil;
 	return &result, err
 }
 
-func (m *goRedissonLock) renewExpirationInner(goroutineId uint64) (int64, error) {
-	return m.goRedisson.client.Eval(context.TODO(), `
+func (m *goRedissonLock) renewExpirationInner(ctx context.Context, goroutineId uint64) (int64, error) {
+	return m.goRedisson.client.Eval(ctx, `
 if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
 	redis.call('pexpire', KEYS[1], ARGV[1]);
 	return 1;
