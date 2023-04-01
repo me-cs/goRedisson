@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// check goRedissonReadLock implements Lock
+// goRedissonReadLock implements Lock
 type goRedissonReadLock struct {
 	goRedissonBaseLock
 }
