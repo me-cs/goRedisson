@@ -189,10 +189,12 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	}
 }
 
+//Lock locks m. Lock returns when locking is successful or when an exception is encountered.
 func (m *goRedissonBaseLock) Lock() error {
 	return m.LockContext(context.Background())
 }
 
+//LockContext locks m. Lock Returns when locking is successful or when the context timeout or an exception is encountered.
 func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
@@ -204,14 +206,17 @@ func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	defer sub.Unsubscribe(context.TODO(), m.lock.getChannelName())
 	ttl := new(int64)
 	// fire
+	// setting ttl to 0 will allow the for loop to start properly
 	*ttl = 0
 	for {
 		select {
 		// obtain lock timeout
 		case <-ctx.Done():
 			return ErrObtainLockTimeout
+		// indicates that the lock has ttl milliseconds to expire
 		case <-time.After(time.Duration(*ttl) * time.Millisecond):
 			ttl, err = m.tryAcquire(ctx, goroutineId)
+		// a lock has been released
 		case <-sub.Channel():
 			ttl, err = m.tryAcquire(ctx, goroutineId)
 		}
@@ -225,10 +230,12 @@ func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	}
 }
 
+//Unlock unlocks m. Unlock returns when unlocking is successful or when an exception is encountered.
 func (m *goRedissonBaseLock) Unlock() error {
 	return m.UnlockContext(context.Background())
 }
 
+//UnlockContext unlocks m. UnlockContext Returns when unlocking is successful or when the context timeout or an exception is encountered.
 func (m *goRedissonBaseLock) UnlockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
