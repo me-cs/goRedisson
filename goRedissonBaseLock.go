@@ -17,9 +17,12 @@ const (
 
 // expirationEntry is a struct that holds the goroutine ids that are waiting for the lock to expire
 type expirationEntry struct {
+	//mutex is used to protect the following fields
 	sync.Mutex
+	// goroutineIds is a map of goroutine ids that are waiting for the lock to expire
 	goroutineIds map[uint64]int64
-	cancelFunc   context.CancelFunc
+	// cancelFunc is the cancel function for the context that is used to cancel the goroutine that is waiting for the lock to expire
+	cancelFunc context.CancelFunc
 }
 
 // newRenewEntry creates a new expirationEntry
@@ -86,7 +89,10 @@ func (e *expirationEntry) getFirstGoroutineId() *uint64 {
 // goRedissonBaseLock is the base lock struct
 type goRedissonBaseLock struct {
 	*goRedissonExpirable
-	ExpirationRenewalMap  sync.Map
+	//expirationRenewal is a map of expiration entries that are used to renew the lock expiration
+	ExpirationRenewalMap sync.Map
+	//internalLockLeaseTime is the internal lock lease time
+	//when the lock is acquired, the expiration is set to this value
 	internalLockLeaseTime time.Duration
 	id                    string
 	entryName             string
@@ -206,6 +212,7 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 }
 
 // Lock locks m. Lock returns when locking is successful or when an exception is encountered.
+// use context.Background() to block until the lock is obtained
 func (m *goRedissonBaseLock) Lock() error {
 	return m.LockContext(context.Background())
 }
@@ -230,9 +237,12 @@ func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 		case <-ctx.Done():
 			return ErrObtainLockTimeout
 		// indicates that the lock has ttl milliseconds to expire
+		// if the lock is not released within ttl milliseconds, the lock will expire
+		// we need to try to acquire the lock again
 		case <-time.After(time.Duration(*ttl) * time.Millisecond):
 			ttl, err = m.tryAcquire(ctx, goroutineId)
 		// a lock has been released
+		// we need to try to acquire the lock again
 		case <-sub.Channel():
 			ttl, err = m.tryAcquire(ctx, goroutineId)
 		}
