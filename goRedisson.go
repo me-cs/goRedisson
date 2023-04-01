@@ -8,8 +8,9 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// GoRedisson is a redisson client.
 type GoRedisson struct {
-	// client redis client
+	//client redis client
 	client *redis.Client
 	//watchDogTimeout timeout for watchdog
 	watchDogTimeout time.Duration
@@ -21,6 +22,7 @@ type GoRedisson struct {
 // The default watchdog timeout, the watchdog will go every 1/3 of the DefaultWatchDogTimeout to renew the lock held by the current thread.
 var DefaultWatchDogTimeout = 30 * time.Second
 
+// NewGoRedisson returns a new GoRedisson instance.
 func NewGoRedisson(redisClient *redis.Client, opts ...OptionFunc) *GoRedisson {
 	g := &GoRedisson{
 		client:          redisClient,
@@ -33,8 +35,10 @@ func NewGoRedisson(redisClient *redis.Client, opts ...OptionFunc) *GoRedisson {
 	return g
 }
 
+// OptionFunc is a function that can be used to configure a GoRedisson instance.
 type OptionFunc func(g *GoRedisson)
 
+// WithWatchDogTimeout sets the timeout for the watchdog.
 func WithWatchDogTimeout(t time.Duration) OptionFunc {
 	return func(g *GoRedisson) {
 		if t.Seconds() < 30 {

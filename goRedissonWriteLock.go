@@ -8,24 +8,29 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// goRedissonWriteLock implements Lock
 type goRedissonWriteLock struct {
 	goRedissonBaseLock
 }
 
+// getChannelName returns the channel name for the lock
 func (m *goRedissonWriteLock) getChannelName() string {
 	return m.prefixName("go_redisson_rwlock", m.getRawName())
 }
 
+// getLockName returns the lock name for the lock
 func (m *goRedissonWriteLock) getLockName(goroutineId uint64) string {
 	return m.goRedissonBaseLock.getLockName(goroutineId) + ":write"
 }
 
+// newRedisWriteLock creates a new goRedissonWriteLock
 func newRedisWriteLock(name string, goRedisson *GoRedisson) Lock {
 	redisWriteLock := &goRedissonWriteLock{}
 	redisWriteLock.goRedissonBaseLock = *newBaseLock(goRedisson.id, name, goRedisson, redisWriteLock)
 	return redisWriteLock
 }
 
+// tryLockInner tries to acquire the lock
 func (m *goRedissonWriteLock) tryLockInner(ctx context.Context, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(ctx, `
 local mode = redis.call('hget', KEYS[1], 'mode');
@@ -55,6 +60,7 @@ return redis.call('pttl', KEYS[1]);
 	return &result, err
 }
 
+// unlockInner unlocks the lock
 func (m *goRedissonWriteLock) unlockInner(ctx context.Context, goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
 
@@ -96,14 +102,17 @@ return nil;
 	return &result, err
 }
 
+// getKeyPrefix returns the key prefix for the lock
 func (m *goRedissonWriteLock) getKeyPrefix(goroutineId uint64, timeoutPrefix string) string {
 	return strings.Split(timeoutPrefix, ":"+m.getLockName(goroutineId))[0]
 }
 
+// getReadWriteTimeoutNamePrefix returns the read write timeout name prefix for the lock
 func (m *goRedissonWriteLock) getReadWriteTimeoutNamePrefix(goroutineId uint64) string {
 	return m.suffixName(m.getRawName(), m.getLockName(goroutineId)) + ":rwlock_timeout"
 }
 
+// renewExpirationInner renews the expiration of the lock
 func (m *goRedissonWriteLock) renewExpirationInner(ctx context.Context, goroutineId uint64) (int64, error) {
 	timeoutPrefix := m.getReadWriteTimeoutNamePrefix(goroutineId)
 	keyPrefix := m.getKeyPrefix(goroutineId, timeoutPrefix)

@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	// check goRedissonLock implements Lock
 	_ Lock = (*goRedissonLock)(nil)
 )
 
@@ -17,20 +18,24 @@ var (
 	ErrObtainLockTimeout = errors.New("obtained lock timeout")
 )
 
+// goRedissonLock is a distributed lock implementation
 type goRedissonLock struct {
 	goRedissonBaseLock
 }
 
+// getChannelName returns the channel name for the lock
 func (m *goRedissonLock) getChannelName() string {
 	return m.prefixName("redisson_lock__channel", m.getRawName())
 }
 
+// newRedisLock creates a new goRedissonLock
 func newRedisLock(name string, goRedisson *GoRedisson) Lock {
 	redisLock := &goRedissonLock{}
 	redisLock.goRedissonBaseLock = *newBaseLock(goRedisson.id, name, goRedisson, redisLock)
 	return redisLock
 }
 
+// tryLockInner tries to acquire the lock
 func (m *goRedissonLock) tryLockInner(ctx context.Context, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(ctx, `
 if (redis.call('exists', KEYS[1]) == 0) then
@@ -54,6 +59,7 @@ return redis.call('pttl', KEYS[1]);
 	return &result, err
 }
 
+// unlockInner releases the lock
 func (m *goRedissonLock) unlockInner(ctx context.Context, goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
 	result, err := m.goRedisson.client.Eval(ctx, `
@@ -80,6 +86,7 @@ return nil;
 	return &result, err
 }
 
+// renewExpirationInner renews the lock expiration
 func (m *goRedissonLock) renewExpirationInner(ctx context.Context, goroutineId uint64) (int64, error) {
 	return m.goRedisson.client.Eval(ctx, `
 if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then

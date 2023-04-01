@@ -12,6 +12,7 @@ import (
 // https://github.com/golang/net/blob/master/http2/gotrack.go
 var goroutineSpace = []byte("goroutine ")
 
+// getId returns the current goroutine's id.
 func getId() (uint64, error) {
 	bp := littleBuf.Get().(*[]byte)
 	defer littleBuf.Put(bp)
@@ -31,6 +32,7 @@ func getId() (uint64, error) {
 	return n, nil
 }
 
+// littleBuf is a pool of 64-byte buffers.
 var littleBuf = sync.Pool{
 	New: func() interface{} {
 		buf := make([]byte, 64)

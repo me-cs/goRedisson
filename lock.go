@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// interface for inner locker
 type innerLocker interface {
 	tryLockInner(context.Context, time.Duration, uint64) (*int64, error)
 	unlockInner(context.Context, uint64) (*int64, error)

@@ -9,22 +9,27 @@ import (
 )
 
 const (
-	unlockMessage     int64 = 0
+	// unlockMessage is the message sent to the channel when the lock is unlocked
+	unlockMessage int64 = 0
+	// readUnlockMessage is the message sent to the channel when the lock is unlocked for read
 	readUnlockMessage int64 = 1
 )
 
+// expirationEntry is a struct that holds the goroutine ids that are waiting for the lock to expire
 type expirationEntry struct {
 	sync.Mutex
 	goroutineIds map[uint64]int64
 	cancelFunc   context.CancelFunc
 }
 
+// newRenewEntry creates a new expirationEntry
 func newRenewEntry() *expirationEntry {
 	return &expirationEntry{
 		goroutineIds: make(map[uint64]int64),
 	}
 }
 
+// addGoroutineId adds a goroutine id to the expirationEntry
 func (e *expirationEntry) addGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
@@ -37,6 +42,7 @@ func (e *expirationEntry) addGoroutineId(goroutineId uint64) {
 	e.goroutineIds[goroutineId] = count
 }
 
+// removeGoroutineId removes a goroutine id from the expirationEntry
 func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
@@ -53,12 +59,14 @@ func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 	}
 }
 
+// hasNoThreads returns true if there are no goroutines waiting for the lock to expire
 func (e *expirationEntry) hasNoThreads() bool {
 	e.Lock()
 	defer e.Unlock()
 	return len(e.goroutineIds) == 0
 }
 
+// getFirstGoroutineId returns the first goroutine id in the expirationEntry
 func (e *expirationEntry) getFirstGoroutineId() *uint64 {
 	e.Lock()
 	defer e.Unlock()
@@ -75,6 +83,7 @@ func (e *expirationEntry) getFirstGoroutineId() *uint64 {
 	return &first
 }
 
+// goRedissonBaseLock is the base lock struct
 type goRedissonBaseLock struct {
 	*goRedissonExpirable
 	ExpirationRenewalMap  sync.Map
@@ -85,6 +94,7 @@ type goRedissonBaseLock struct {
 	goRedisson            *GoRedisson
 }
 
+// newBaseLock creates a new goRedissonBaseLock
 func newBaseLock(key, name string, redisson *GoRedisson, locker innerLocker) *goRedissonBaseLock {
 	baseLock := &goRedissonBaseLock{
 		goRedissonExpirable:   newGoRedissonExpirable(name),
@@ -97,14 +107,17 @@ func newBaseLock(key, name string, redisson *GoRedisson, locker innerLocker) *go
 	return baseLock
 }
 
+// getLockName returns the lock name
 func (m *goRedissonBaseLock) getLockName(goroutineId uint64) string {
 	return m.id + ":" + strconv.FormatUint(goroutineId, 10)
 }
 
+// getEntryName returns the entry name
 func (m *goRedissonBaseLock) getEntryName() string {
 	return m.entryName
 }
 
+// tryAcquire tries to acquire the lock
 func (m *goRedissonBaseLock) tryAcquire(ctx context.Context, goroutineId uint64) (*int64, error) {
 	ttl, err := m.lock.tryLockInner(ctx, m.internalLockLeaseTime, goroutineId)
 	if err != nil {
@@ -117,6 +130,7 @@ func (m *goRedissonBaseLock) tryAcquire(ctx context.Context, goroutineId uint64)
 	return ttl, nil
 }
 
+// scheduleExpirationRenewal schedules the expiration renewal
 func (m *goRedissonBaseLock) scheduleExpirationRenewal(goroutineId uint64) {
 	entry := newRenewEntry()
 	oldEntry, stored := m.ExpirationRenewalMap.LoadOrStore(m.getEntryName(), entry)
@@ -128,6 +142,7 @@ func (m *goRedissonBaseLock) scheduleExpirationRenewal(goroutineId uint64) {
 	}
 }
 
+// renewExpiration renews the expiration
 func (m *goRedissonBaseLock) renewExpiration() {
 	entryName := m.getEntryName()
 	ee, ok := m.ExpirationRenewalMap.Load(entryName)
@@ -169,6 +184,7 @@ func (m *goRedissonBaseLock) renewExpiration() {
 	ee.(*expirationEntry).Unlock()
 }
 
+// cancelExpirationRenewal cancels the expiration renewal
 func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	entry, ok := m.ExpirationRenewalMap.Load(m.getEntryName())
 	if !ok {
@@ -189,12 +205,12 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 	}
 }
 
-//Lock locks m. Lock returns when locking is successful or when an exception is encountered.
+// Lock locks m. Lock returns when locking is successful or when an exception is encountered.
 func (m *goRedissonBaseLock) Lock() error {
 	return m.LockContext(context.Background())
 }
 
-//LockContext locks m. Lock Returns when locking is successful or when the context timeout or an exception is encountered.
+// LockContext locks m. Lock Returns when locking is successful or when the context timeout or an exception is encountered.
 func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
@@ -230,12 +246,12 @@ func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	}
 }
 
-//Unlock unlocks m. Unlock returns when unlocking is successful or when an exception is encountered.
+// Unlock unlocks m. Unlock returns when unlocking is successful or when an exception is encountered.
 func (m *goRedissonBaseLock) Unlock() error {
 	return m.UnlockContext(context.Background())
 }
 
-//UnlockContext unlocks m. UnlockContext Returns when unlocking is successful or when the context timeout or an exception is encountered.
+// UnlockContext unlocks m. UnlockContext Returns when unlocking is successful or when the context timeout or an exception is encountered.
 func (m *goRedissonBaseLock) UnlockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
