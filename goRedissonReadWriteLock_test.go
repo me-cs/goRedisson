@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//TestReadWriteLock test read write lock
+// TestReadWriteLock test read write lock
 func TestReadWriteLock(t *testing.T) {
 	l := getGoRedisson().GetReadWriteLock("TestReadWriteLock")
 	a := 0
@@ -67,7 +67,7 @@ func TestReadWriteLock(t *testing.T) {
 	}
 }
 
-//TestReadWriteLockFailFast test read write lock fail fast
+// TestReadWriteLockFailFast test read write lock fail fast
 func TestReadWriteLockFailFast(t *testing.T) {
 	l := getGoRedisson().GetReadWriteLock("TestReadWriteLockFailFast")
 	a := 0

@@ -152,7 +152,7 @@ func TestParseUintBytes0BitSize(t *testing.T) {
 	}
 }
 
-//TestCutoff64 tests the cutoff64 function.
+// TestCutoff64 tests the cutoff64 function.
 func TestCutoff64(t *testing.T) {
 	if cutoff64(1) != 0 {
 		panic("cutoff64(1)!=0")

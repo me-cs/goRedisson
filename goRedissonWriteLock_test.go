@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//TestWriteLockRenew test write lock renew
+// TestWriteLockRenew test write lock renew
 func TestWriteLockRenew(t *testing.T) {
 	g := getGoRedisson()
 	mutex := g.GetReadWriteLock("TestWriteLockRenew")
@@ -24,7 +24,7 @@ func TestWriteLockRenew(t *testing.T) {
 	}
 }
 
-//TestWWLockUnlock test write lock unlock
+// TestWWLockUnlock test write lock unlock
 func testWriteLock(times int) {
 	l := getGoRedisson().GetReadWriteLock("TestWriteLock")
 	a := 0

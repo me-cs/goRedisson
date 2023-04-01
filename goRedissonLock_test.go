@@ -17,7 +17,7 @@ const (
 	redisAddr = "localhost:6379"
 )
 
-//getGoRedisson get a GoRedisson instance
+// getGoRedisson get a GoRedisson instance
 func getGoRedisson() *GoRedisson {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
@@ -27,7 +27,7 @@ func getGoRedisson() *GoRedisson {
 	return NewGoRedisson(redisDB)
 }
 
-//TestMutexRenew test mutex renew
+// TestMutexRenew test mutex renew
 func TestMutexRenew(t *testing.T) {
 	g := getGoRedisson()
 	mutex := g.GetLock("TestMutexRenew")
@@ -46,7 +46,7 @@ func TestMutexRenew(t *testing.T) {
 
 }
 
-//TestMutexRenewTwice test mutex renew twice
+// TestMutexRenewTwice test mutex renew twice
 func TestMutexRenewTwice(t *testing.T) {
 	g := getGoRedisson()
 	mutex := g.GetLock("TestMutexRenew")
@@ -65,7 +65,7 @@ func TestMutexRenewTwice(t *testing.T) {
 
 }
 
-//TestMutexRenewTogether test mutex renew together
+// TestMutexRenewTogether test mutex renew together
 func TestMutexRenewTogether(t *testing.T) {
 	g := getGoRedisson()
 	wg := sync.WaitGroup{}
@@ -91,7 +91,7 @@ func TestMutexRenewTogether(t *testing.T) {
 	wg.Wait()
 }
 
-//TestWithWatchDogTimeout test with watchdog timeout
+// TestWithWatchDogTimeout test with watchdog timeout
 func TestWithWatchDogTimeout(t *testing.T) {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
@@ -115,7 +115,7 @@ func TestWithWatchDogTimeout(t *testing.T) {
 
 }
 
-//TestWithWatchDogTimeout2 test with small watchdog timeout
+// TestWithWatchDogTimeout2 test with small watchdog timeout
 func TestWithWatchDogTimeout2(t *testing.T) {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
@@ -139,7 +139,7 @@ func TestWithWatchDogTimeout2(t *testing.T) {
 
 }
 
-//singleLockUnlockTest test single lock and unlock
+// singleLockUnlockTest test single lock and unlock
 func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error {
 	mutex := g.GetLock("plus_" + variableName)
 	a := 0
@@ -170,7 +170,7 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 	return nil
 }
 
-//TestMutex_LockUnlock test mutex lock and unlock
+// TestMutex_LockUnlock test mutex lock and unlock
 func TestMutex_LockUnlock(t *testing.T) {
 	testCase := []int32{1, 10, 100, 200, 300, 330}
 	for _, v := range testCase {
@@ -180,7 +180,7 @@ func TestMutex_LockUnlock(t *testing.T) {
 	}
 }
 
-//TestMultiMutex test multi mutex
+// TestMultiMutex test multi mutex
 func TestMultiMutex(t *testing.T) {
 	testCases := []int32{1, 10, 100, 200}
 	id := 0
@@ -209,7 +209,7 @@ func TestMultiMutex(t *testing.T) {
 	}
 }
 
-//TestMutexFairness test mutex fairness
+// TestMutexFairness test mutex fairness
 func TestMutexFairness(t *testing.T) {
 	g := getGoRedisson()
 	mu := g.GetLock("TestMutexFairness")
@@ -259,7 +259,7 @@ func TestMutexFairness(t *testing.T) {
 	}
 }
 
-//benchmarkMutex benchmark mutex
+// benchmarkMutex benchmark mutex
 func benchmarkMutex(b *testing.B, slack, work bool) {
 	mu := getGoRedisson().GetLock("benchmarkMutex")
 	if slack {
