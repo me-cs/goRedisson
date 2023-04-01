@@ -31,7 +31,7 @@ func TestMutexRenew(t *testing.T) {
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func TestMutexRenewTwice(t *testing.T) {
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -73,7 +73,7 @@ func TestMutexRenewTogether(t *testing.T) {
 			mutex := g.GetLock("TestMutexRenew" + strconv.Itoa(ind))
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			err := mutex.TryLock(ctx)
+			err := mutex.LockContext(ctx)
 			if err != nil {
 				panic(err)
 			}
@@ -97,7 +97,7 @@ func TestWithWatchDogTimeout(t *testing.T) {
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -120,7 +120,7 @@ func TestWithWatchDogTimeout2(t *testing.T) {
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +144,7 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
-			err := mutex.TryLock(ctx)
+			err := mutex.LockContext(ctx)
 			if err != nil {
 				return
 			}
@@ -208,7 +208,7 @@ func TestMutexFairness(t *testing.T) {
 	go func() {
 		for {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-			err := mu.TryLock(ctx)
+			err := mu.LockContext(ctx)
 			cancel()
 			if err != nil {
 				panic(err)
@@ -230,7 +230,7 @@ func TestMutexFairness(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			time.Sleep(100 * time.Microsecond)
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-			err := mu.TryLock(ctx)
+			err := mu.LockContext(ctx)
 			cancel()
 			if err != nil {
 				panic(err)
@@ -258,7 +258,7 @@ func benchmarkMutex(b *testing.B, slack, work bool) {
 		foo := 0
 		for pb.Next() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			err := mu.TryLock(ctx)
+			err := mu.LockContext(ctx)
 			cancel()
 			if err != nil {
 				panic(err)
@@ -298,7 +298,7 @@ func HammerMutex(m Lock, loops int, cdone chan bool) {
 	for i := 0; i < loops; i++ {
 		if i%3 == 0 {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			if m.TryLock(ctx) == nil {
+			if m.LockContext(ctx) == nil {
 				err := m.Unlock()
 				if err != nil {
 					panic(err)
@@ -308,7 +308,7 @@ func HammerMutex(m Lock, loops int, cdone chan bool) {
 			continue
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		err := m.TryLock(ctx)
+		err := m.LockContext(ctx)
 		cancel()
 		if err != nil {
 			panic(err)
@@ -341,7 +341,7 @@ func TestMutex(t *testing.T) {
 func TestUnlockWithoutLocking(t *testing.T) {
 	mutex := getGodisson().GetLock("TestUnlockWithoutLocking")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	cancel()
 	if err != nil {
 		panic(err)
@@ -369,7 +369,7 @@ func TestRedisConnFailure(t *testing.T) {
 	_ = redisDB.Close()
 	mutex := g.GetLock("TestRedisConnFailure")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	cancel()
 	if err == nil {
 		panic("it should not be nil")

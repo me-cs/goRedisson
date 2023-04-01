@@ -14,7 +14,7 @@ func TestReadLockRenew(t *testing.T) {
 	mutex := g.GetReadWriteLock("TestReadLockRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.ReadLock().TryLock(ctx)
+	err := mutex.ReadLock().LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +34,7 @@ func TestWWLockUnlock(t *testing.T) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		err := wl.WriteLock().TryLock(ctx)
+		err := wl.WriteLock().LockContext(ctx)
 
 		if err != nil {
 			panic(err)
@@ -48,7 +48,7 @@ func TestWWLockUnlock(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	err := wl.WriteLock().TryLock(ctx)
+	err := wl.WriteLock().LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func TestWRLockUnlock(t *testing.T) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		err := wl.ReadLock().TryLock(ctx)
+		err := wl.ReadLock().LockContext(ctx)
 		if err != nil {
 			panic(err)
 		}
@@ -79,7 +79,7 @@ func TestWRLockUnlock(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	err := wl.WriteLock().TryLock(ctx)
+	err := wl.WriteLock().LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +97,7 @@ func TestRWLockUnlock(t *testing.T) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		err := wl.WriteLock().TryLock(ctx)
+		err := wl.WriteLock().LockContext(ctx)
 
 		if err != nil {
 			panic(err)
@@ -111,7 +111,7 @@ func TestRWLockUnlock(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	err := wl.ReadLock().TryLock(ctx)
+	err := wl.ReadLock().LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -127,13 +127,13 @@ func TestRRLock(t *testing.T) {
 	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRRLock")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	err := wl.ReadLock().TryLock(ctx)
+	err := wl.ReadLock().LockContext(ctx)
 	cancel()
 	if err != nil {
 		panic(err)
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
-	err = wl.ReadLock().TryLock(ctx)
+	err = wl.ReadLock().LockContext(ctx)
 	cancel()
 	if err != nil {
 		panic("err")
@@ -159,7 +159,7 @@ func TestReadLock(t *testing.T) {
 			defer innerWg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			err := l.ReadLock().TryLock(ctx)
+			err := l.ReadLock().LockContext(ctx)
 			if err != nil {
 				panic(err.Error() + ":" + key)
 			}

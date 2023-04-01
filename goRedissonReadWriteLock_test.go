@@ -24,7 +24,7 @@ func TestReadWriteLock(t *testing.T) {
 				defer innerWg.Done()
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				defer cancel()
-				err := l.WriteLock().TryLock(ctx)
+				err := l.WriteLock().LockContext(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -47,7 +47,7 @@ func TestReadWriteLock(t *testing.T) {
 				defer innerWg.Done()
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				defer cancel()
-				err := l.ReadLock().TryLock(ctx)
+				err := l.ReadLock().LockContext(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -80,7 +80,7 @@ func TestReadWriteLockFailFast(t *testing.T) {
 				defer innerWg.Done()
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 				defer cancel()
-				err := l.WriteLock().TryLock(ctx)
+				err := l.WriteLock().LockContext(ctx)
 				if err != nil {
 					return
 				}
@@ -117,7 +117,7 @@ func TestRWMutex(t *testing.T) {
 func writer(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan bool) {
 	for i := 0; i < num_iterations; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		err := rwm.WriteLock().TryLock(ctx)
+		err := rwm.WriteLock().LockContext(ctx)
 		cancel()
 		if err != nil {
 			panic(err)
@@ -144,7 +144,7 @@ func writer(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan b
 func reader(rwm ReadWriteLock, num_iterations int, activity *int32, cdone chan bool) {
 	for i := 0; i < num_iterations; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		err := rwm.ReadLock().TryLock(ctx)
+		err := rwm.ReadLock().LockContext(ctx)
 		cancel()
 		if err != nil {
 			panic(err)

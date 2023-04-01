@@ -42,7 +42,7 @@ func main() {
 	mutex := g.GetLock("example")
 	ctx,cancel:=context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	err := mutex.TryLock(ctx)
+	err := mutex.LockContext(ctx)
 	if err != nil {
 		log.Print(err)
 		return
@@ -83,7 +83,7 @@ func testRwMutex() {
 				defer innerWg.Done()
 				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
-				err := l.WriteLock().TryLock(ctx)
+				err := l.WriteLock().LockContext(ctx)
 				if err != nil {
 					panic(err)
 				}
@@ -106,7 +106,7 @@ func testRwMutex() {
 				defer innerWg.Done()
 				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
-				err := l.ReadLock().TryLock(ctx)
+				err := l.ReadLock().LockContext(ctx)
 				if err != nil {
 					panic(err)
 				}

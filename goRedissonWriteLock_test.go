@@ -12,7 +12,7 @@ func TestWriteLockRenew(t *testing.T) {
 	mutex := g.GetReadWriteLock("TestWriteLockRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.WriteLock().TryLock(ctx)
+	err := mutex.WriteLock().LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func testWriteLock(times int) {
 				defer innerWg.Done()
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				defer cancel()
-				err := l.WriteLock().TryLock(ctx)
+				err := l.WriteLock().LockContext(ctx)
 				if err != nil {
 					panic(err)
 				}

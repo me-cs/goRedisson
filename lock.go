@@ -17,6 +17,6 @@ type Lock interface {
 	Lock() error
 	Unlock() error
 
-	TryLock(context.Context) error
+	LockContext(context.Context) error
 	UnlockContext(context.Context) error
 }

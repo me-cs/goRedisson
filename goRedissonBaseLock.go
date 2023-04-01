@@ -190,10 +190,10 @@ func (m *goRedissonBaseLock) cancelExpirationRenewal(goroutineId uint64) {
 }
 
 func (m *goRedissonBaseLock) Lock() error {
-	return m.TryLock(context.Background())
+	return m.LockContext(context.Background())
 }
 
-func (m *goRedissonBaseLock) TryLock(ctx context.Context) error {
+func (m *goRedissonBaseLock) LockContext(ctx context.Context) error {
 	goroutineId, err := getId()
 	if err != nil {
 		return err
