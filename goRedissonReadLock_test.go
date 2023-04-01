@@ -10,7 +10,7 @@ import (
 )
 
 func TestReadLockRenew(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	mutex := g.GetReadWriteLock("TestReadLockRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -28,7 +28,7 @@ func TestReadLockRenew(t *testing.T) {
 }
 
 func TestWWLockUnlock(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestWWLockUnlock")
 	go func() {
@@ -60,7 +60,7 @@ func TestWWLockUnlock(t *testing.T) {
 }
 
 func TestWRLockUnlock(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestWRLockUnlock")
 	go func() {
@@ -91,7 +91,7 @@ func TestWRLockUnlock(t *testing.T) {
 }
 
 func TestRWLockUnlock(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRWLockUnlock")
 	go func() {
@@ -123,7 +123,7 @@ func TestRWLockUnlock(t *testing.T) {
 }
 
 func TestRRLock(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	var wl ReadWriteLock
 	wl = g.GetReadWriteLock("TestRRLock")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -149,7 +149,7 @@ func TestRRLock(t *testing.T) {
 }
 
 func TestReadLock(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	key := strconv.FormatInt(int64(rand.Int31n(1000000)), 10)
 	l := g.GetReadWriteLock(key)
 	innerWg := sync.WaitGroup{}

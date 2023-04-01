@@ -7,8 +7,9 @@ import (
 	"time"
 )
 
+//TestWriteLockRenew test write lock renew
 func TestWriteLockRenew(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	mutex := g.GetReadWriteLock("TestWriteLockRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -23,8 +24,9 @@ func TestWriteLockRenew(t *testing.T) {
 	}
 }
 
+//TestWWLockUnlock test write lock unlock
 func testWriteLock(times int) {
-	l := getGodisson().GetReadWriteLock("TestWriteLock")
+	l := getGoRedisson().GetReadWriteLock("TestWriteLock")
 	a := 0
 	wg := sync.WaitGroup{}
 	wg.Add(1)

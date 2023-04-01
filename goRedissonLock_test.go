@@ -17,7 +17,8 @@ const (
 	redisAddr = "localhost:6379"
 )
 
-func getGodisson() *GoRedisson {
+//getGoRedisson get a GoRedisson instance
+func getGoRedisson() *GoRedisson {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: "", // no password set
@@ -26,8 +27,9 @@ func getGodisson() *GoRedisson {
 	return NewGoRedisson(redisDB)
 }
 
+//TestMutexRenew test mutex renew
 func TestMutexRenew(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -44,8 +46,9 @@ func TestMutexRenew(t *testing.T) {
 
 }
 
+//TestMutexRenewTwice test mutex renew twice
 func TestMutexRenewTwice(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	mutex := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -62,8 +65,9 @@ func TestMutexRenewTwice(t *testing.T) {
 
 }
 
+//TestMutexRenewTogether test mutex renew together
 func TestMutexRenewTogether(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	wg := sync.WaitGroup{}
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -87,6 +91,7 @@ func TestMutexRenewTogether(t *testing.T) {
 	wg.Wait()
 }
 
+//TestWithWatchDogTimeout test with watchdog timeout
 func TestWithWatchDogTimeout(t *testing.T) {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
@@ -110,6 +115,7 @@ func TestWithWatchDogTimeout(t *testing.T) {
 
 }
 
+//TestWithWatchDogTimeout2 test with small watchdog timeout
 func TestWithWatchDogTimeout2(t *testing.T) {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
@@ -133,6 +139,7 @@ func TestWithWatchDogTimeout2(t *testing.T) {
 
 }
 
+//singleLockUnlockTest test single lock and unlock
 func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error {
 	mutex := g.GetLock("plus_" + variableName)
 	a := 0
@@ -163,15 +170,17 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 	return nil
 }
 
+//TestMutex_LockUnlock test mutex lock and unlock
 func TestMutex_LockUnlock(t *testing.T) {
 	testCase := []int32{1, 10, 100, 200, 300, 330}
 	for _, v := range testCase {
-		if err := singleLockUnlockTest(v, "variable_1", getGodisson()); err != nil {
+		if err := singleLockUnlockTest(v, "variable_1", getGoRedisson()); err != nil {
 			t.Fatalf("err=%v", err)
 		}
 	}
 }
 
+//TestMultiMutex test multi mutex
 func TestMultiMutex(t *testing.T) {
 	testCases := []int32{1, 10, 100, 200}
 	id := 0
@@ -186,7 +195,7 @@ func TestMultiMutex(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := singleLockUnlockTest(10, fmt.Sprintf("variable_%d", getVariableId()), getGodisson())
+				err := singleLockUnlockTest(10, fmt.Sprintf("variable_%d", getVariableId()), getGoRedisson())
 				if err != nil {
 					atomic.AddInt32(&numOfFailures, 1)
 					return
@@ -200,8 +209,9 @@ func TestMultiMutex(t *testing.T) {
 	}
 }
 
+//TestMutexFairness test mutex fairness
 func TestMutexFairness(t *testing.T) {
-	g := getGodisson()
+	g := getGoRedisson()
 	mu := g.GetLock("TestMutexFairness")
 	stop := make(chan bool)
 	defer close(stop)
@@ -249,8 +259,9 @@ func TestMutexFairness(t *testing.T) {
 	}
 }
 
+//benchmarkMutex benchmark mutex
 func benchmarkMutex(b *testing.B, slack, work bool) {
-	mu := getGodisson().GetLock("benchmarkMutex")
+	mu := getGoRedisson().GetLock("benchmarkMutex")
 	if slack {
 		b.SetParallelism(10)
 	}
@@ -327,7 +338,7 @@ func TestMutex(t *testing.T) {
 	}
 	defer runtime.SetMutexProfileFraction(0)
 
-	m := getGodisson().GetLock("TestMutex")
+	m := getGoRedisson().GetLock("TestMutex")
 
 	c := make(chan bool)
 	for i := 0; i < 10; i++ {
@@ -339,7 +350,7 @@ func TestMutex(t *testing.T) {
 }
 
 func TestUnlockWithoutLocking(t *testing.T) {
-	mutex := getGodisson().GetLock("TestUnlockWithoutLocking")
+	mutex := getGoRedisson().GetLock("TestUnlockWithoutLocking")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	err := mutex.LockContext(ctx)
 	cancel()
@@ -381,7 +392,7 @@ func TestRedisConnFailure(t *testing.T) {
 }
 
 func TestLockBackground(t *testing.T) {
-	l := getGodisson().GetLock("TestLockBackground")
+	l := getGoRedisson().GetLock("TestLockBackground")
 	a := 0
 	wg := sync.WaitGroup{}
 	wg.Add(1)

@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
+//TestReadWriteLock test read write lock
 func TestReadWriteLock(t *testing.T) {
-	l := getGodisson().GetReadWriteLock("TestReadWriteLock")
+	l := getGoRedisson().GetReadWriteLock("TestReadWriteLock")
 	a := 0
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -66,8 +67,9 @@ func TestReadWriteLock(t *testing.T) {
 	}
 }
 
+//TestReadWriteLockFailFast test read write lock fail fast
 func TestReadWriteLockFailFast(t *testing.T) {
-	l := getGodisson().GetReadWriteLock("TestReadWriteLockFailFast")
+	l := getGoRedisson().GetReadWriteLock("TestReadWriteLockFailFast")
 	a := 0
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -173,7 +175,7 @@ func HammerRWMutex(gomaxprocs, numReaders, num_iterations int) {
 	// Number of active readers + 10000 * number of active writers.
 	var activity int32
 	var rwm ReadWriteLock
-	rwm = getGodisson().GetReadWriteLock("HammerRWMutex")
+	rwm = getGoRedisson().GetReadWriteLock("HammerRWMutex")
 	cdone := make(chan bool)
 	go writer(rwm, num_iterations, &activity, cdone)
 	var i int

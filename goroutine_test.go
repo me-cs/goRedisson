@@ -114,6 +114,7 @@ func init() {
 	}
 }
 
+// TestParseUintBytes tests the parseUintBytes function.
 func TestParseUintBytes(t *testing.T) {
 	for i := range parseUint64Tests {
 		test := &parseUint64Tests[i]
@@ -125,6 +126,8 @@ func TestParseUintBytes(t *testing.T) {
 	}
 }
 
+// TestParseUintBytesBase tests the parseUintBytes function with
+// a non-zero base.
 func TestParseUintBytesBase(t *testing.T) {
 	for i := range parseUint64BaseTests {
 		test := &parseUint64BaseTests[i]
@@ -136,6 +139,8 @@ func TestParseUintBytesBase(t *testing.T) {
 	}
 }
 
+// TestParseUintBytes0BitSize tests the parseUintBytes function with
+// a zero bitSize.
 func TestParseUintBytes0BitSize(t *testing.T) {
 	for i := range parseUint64Tests {
 		test := &parseUint64Tests[i]
@@ -147,6 +152,7 @@ func TestParseUintBytes0BitSize(t *testing.T) {
 	}
 }
 
+//TestCutoff64 tests the cutoff64 function.
 func TestCutoff64(t *testing.T) {
 	if cutoff64(1) != 0 {
 		panic("cutoff64(1)!=0")
