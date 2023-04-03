@@ -132,3 +132,7 @@ func testRwMutex() {
 Contributing is done with commit code. There is no help that is too small! :) 
 
 If you wish to contribute to this project, please branch and issue a pull request against master ("[GitHub Flow](https://guides.github.com/introduction/flow/)")
+
+## Give a Star! ⭐
+
+If you like or are using this project to learn or solve real problems through this project. please give it a star. Thanks!
