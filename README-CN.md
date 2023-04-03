@@ -12,7 +12,7 @@
 ## 项目描述
 带有看门狗的 redis 互斥锁/读写锁 的go语言实现
 
-[English](README.md)|简体中文
+[English](README.md) | 简体中文
 
 ### 示例:
 
