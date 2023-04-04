@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/elliotchance/orderedmap/v2"
 )
 
 const (
@@ -20,7 +22,7 @@ type expirationEntry struct {
 	//mutex is used to protect the following fields
 	sync.Mutex
 	// goroutineIds is a map of goroutine ids that are waiting for the lock to expire
-	goroutineIds map[uint64]int64
+	goroutineIds *orderedmap.OrderedMap[uint64, int64]
 	// cancelFunc is the cancel function for the context that is used to cancel the goroutine that is waiting for the lock to expire
 	cancelFunc context.CancelFunc
 }
@@ -28,7 +30,7 @@ type expirationEntry struct {
 // newRenewEntry creates a new expirationEntry
 func newRenewEntry() *expirationEntry {
 	return &expirationEntry{
-		goroutineIds: make(map[uint64]int64),
+		goroutineIds: orderedmap.NewOrderedMap[uint64, int64](),
 	}
 }
 
@@ -36,13 +38,13 @@ func newRenewEntry() *expirationEntry {
 func (e *expirationEntry) addGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
-	count, ok := e.goroutineIds[goroutineId]
+	count, ok := e.goroutineIds.Get(goroutineId)
 	if ok {
 		count++
 	} else {
 		count = 1
 	}
-	e.goroutineIds[goroutineId] = count
+	e.goroutineIds.Set(goroutineId, count)
 }
 
 // removeGoroutineId removes a goroutine id from the expirationEntry
@@ -50,15 +52,15 @@ func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 	e.Lock()
 	defer e.Unlock()
 
-	count, ok := e.goroutineIds[goroutineId]
+	count, ok := e.goroutineIds.Get(goroutineId)
 	if !ok {
 		return
 	}
 	count--
 	if count == 0 {
-		delete(e.goroutineIds, goroutineId)
+		e.goroutineIds.Delete(goroutineId)
 	} else {
-		e.goroutineIds[goroutineId] = count
+		e.goroutineIds.Set(goroutineId, count)
 	}
 }
 
@@ -66,23 +68,17 @@ func (e *expirationEntry) removeGoroutineId(goroutineId uint64) {
 func (e *expirationEntry) hasNoThreads() bool {
 	e.Lock()
 	defer e.Unlock()
-	return len(e.goroutineIds) == 0
+	return e.goroutineIds.Len() == 0
 }
 
 // getFirstGoroutineId returns the first goroutine id in the expirationEntry
 func (e *expirationEntry) getFirstGoroutineId() *uint64 {
 	e.Lock()
 	defer e.Unlock()
-	if len(e.goroutineIds) == 0 {
+	if e.goroutineIds.Len() == 0 {
 		return nil
 	}
-
-	var first = uint64(1<<64 - 1)
-	for key := range e.goroutineIds {
-		if key <= first {
-			first = key
-		}
-	}
+	first := e.goroutineIds.Front().Key
 	return &first
 }
 
