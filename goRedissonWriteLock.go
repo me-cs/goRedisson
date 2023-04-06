@@ -35,19 +35,19 @@ func (m *goRedissonWriteLock) tryLockInner(ctx context.Context, leaseTime time.D
 	result, err := m.goRedisson.client.Eval(ctx, `
 local mode = redis.call('hget', KEYS[1], 'mode');
 if (mode == false) then
-     redis.call('hset', KEYS[1], 'mode', 'write');
-     redis.call('hset', KEYS[1], ARGV[2], 1);
-     redis.call('pexpire', KEYS[1], ARGV[1]);
-     return nil;
-end;
+    redis.call('hset', KEYS[1], 'mode', 'write');
+    redis.call('hset', KEYS[1], ARGV[2], 1);
+    redis.call('pexpire', KEYS[1], ARGV[1]);
+    return nil;
+end ;
 if (mode == 'write') then
     if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
-        redis.call('hincrby', KEYS[1], ARGV[2], 1); 
+        redis.call('hincrby', KEYS[1], ARGV[2], 1);
         local currentExpire = redis.call('pttl', KEYS[1]);
         redis.call('pexpire', KEYS[1], currentExpire + ARGV[1]);
         return nil;
-    end;
-end;
+    end ;
+end ;
 return redis.call('pttl', KEYS[1]);
 `, []string{m.getRawName()}, leaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 	if err != nil {
@@ -67,30 +67,30 @@ func (m *goRedissonWriteLock) unlockInner(ctx context.Context, goroutineId uint6
 	result, err := m.goRedisson.client.Eval(ctx, `
 local mode = redis.call('hget', KEYS[1], 'mode');
 if (mode == false) then
-   redis.call('publish', KEYS[2], ARGV[1]);
-   return 1;
-end;
+    redis.call('publish', KEYS[2], ARGV[1]);
+    return 1;
+end ;
 if (mode == 'write') then
-   local lockExists = redis.call('hexists', KEYS[1], ARGV[3]);
-   if (lockExists == 0) then
-      return nil;
-   else
-       local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1);
-       if (counter > 0) then
-           redis.call('pexpire', KEYS[1], ARGV[2]);
-           return 0;
-       else
-           redis.call('hdel', KEYS[1], ARGV[3]);
-           if (redis.call('hlen', KEYS[1]) == 1) then
-              redis.call('del', KEYS[1]);
-              redis.call('publish', KEYS[2], ARGV[1]); 
-           else
-              redis.call('hset', KEYS[1], 'mode', 'read');
-           end;
-           return 1;
-       end;
-   end;
-end;
+    local lockExists = redis.call('hexists', KEYS[1], ARGV[3]);
+    if (lockExists == 0) then
+        return nil;
+    else
+        local counter = redis.call('hincrby', KEYS[1], ARGV[3], -1);
+        if (counter > 0) then
+            redis.call('pexpire', KEYS[1], ARGV[2]);
+            return 0;
+        else
+            redis.call('hdel', KEYS[1], ARGV[3]);
+            if (redis.call('hlen', KEYS[1]) == 1) then
+                redis.call('del', KEYS[1]);
+                redis.call('publish', KEYS[2], ARGV[1]);
+            else
+                redis.call('hset', KEYS[1], 'mode', 'read');
+            end ;
+            return 1;
+        end ;
+    end ;
+end ;
 return nil;
 `, []string{m.getRawName(), m.getChannelName()}, readUnlockMessage, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 	if err != nil {
@@ -121,21 +121,21 @@ func (m *goRedissonWriteLock) renewExpirationInner(ctx context.Context, goroutin
 local counter = redis.call('hget', KEYS[1], ARGV[2]);
 if (counter ~= false) then
     redis.call('pexpire', KEYS[1], ARGV[1]);
-    
+
     if (redis.call('hlen', KEYS[1]) > 1) then
-        local keys = redis.call('hkeys', KEYS[1]); 
-        for n, key in ipairs(keys) do 
-            counter = tonumber(redis.call('hget', KEYS[1], key)); 
-            if type(counter) == 'number' then 
-                for i=counter, 1, -1 do 
-                    redis.call('pexpire', KEYS[2] .. ':' .. key .. ':rwlock_timeout:' .. i, ARGV[1]); 
-                end; 
-            end; 
-        end;
-    end;
-    
+        local keys = redis.call('hkeys', KEYS[1]);
+        for n, key in ipairs(keys) do
+            counter = tonumber(redis.call('hget', KEYS[1], key));
+            if type(counter) == 'number' then
+                for i = counter, 1, -1 do
+                    redis.call('pexpire', KEYS[2] .. ':' .. key .. ':rwlock_timeout:' .. i, ARGV[1]);
+                end ;
+            end ;
+        end ;
+    end ;
+
     return 1;
-end;
+end ;
 return 0;
 `, []string{m.getRawName(), keyPrefix}, m.internalLockLeaseTime.Milliseconds(), m.getLockName(goroutineId)).Int64()
 }
