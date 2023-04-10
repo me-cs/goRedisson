@@ -27,46 +27,45 @@ func getGoRedisson() *GoRedisson {
 	return NewGoRedisson(redisDB)
 }
 
-// TestMutexRenew test mutex renew
-func TestMutexRenew(t *testing.T) {
+// TestLockRenew test lock renew
+func TestLockRenew(t *testing.T) {
 	g := getGoRedisson()
-	mutex := g.GetLock("TestMutexRenew")
+	lock := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	time.Sleep(15 * time.Second)
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		panic(err)
 	}
-
 }
 
-// TestMutexRenewTwice test mutex renew twice
-func TestMutexRenewTwice(t *testing.T) {
+// TestLockRenewTwice test lock renew twice
+func TestLockRenewTwice(t *testing.T) {
 	g := getGoRedisson()
-	mutex := g.GetLock("TestMutexRenew")
+	lock := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	time.Sleep(25 * time.Second)
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		panic(err)
 	}
 
 }
 
-// TestMutexRenewTogether test mutex renew together
-func TestMutexRenewTogether(t *testing.T) {
+// TestLockRenewTogether test lock renew together
+func TestLockRenewTogether(t *testing.T) {
 	g := getGoRedisson()
 	wg := sync.WaitGroup{}
 	for i := 0; i < 10; i++ {
@@ -74,15 +73,15 @@ func TestMutexRenewTogether(t *testing.T) {
 		ind := i
 		go func() {
 			defer wg.Done()
-			mutex := g.GetLock("TestMutexRenew" + strconv.Itoa(ind))
+			lock := g.GetLock("TestMutexRenew" + strconv.Itoa(ind))
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			err := mutex.LockContext(ctx)
+			err := lock.LockContext(ctx)
 			if err != nil {
 				panic(err)
 			}
 			time.Sleep(15 * time.Second)
-			err = mutex.Unlock()
+			err = lock.Unlock()
 			if err != nil {
 				panic(err)
 			}
@@ -99,16 +98,16 @@ func TestWithWatchDogTimeout(t *testing.T) {
 		DB:       0,  // use default DB
 	})
 	g := NewGoRedisson(redisDB, WithWatchDogTimeout(time.Second*39))
-	mutex := g.GetLock("TestMutexRenew")
+	lock := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	time.Sleep(15 * time.Second)
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		panic(err)
 	}
@@ -123,16 +122,16 @@ func TestWithWatchDogTimeout2(t *testing.T) {
 		DB:       0,  // use default DB
 	})
 	g := NewGoRedisson(redisDB, WithWatchDogTimeout(time.Second))
-	mutex := g.GetLock("TestMutexRenew")
+	lock := g.GetLock("TestMutexRenew")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	if err != nil {
 		panic(err)
 	}
 
 	time.Sleep(15 * time.Second)
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		panic(err)
 	}
@@ -141,7 +140,7 @@ func TestWithWatchDogTimeout2(t *testing.T) {
 
 // singleLockUnlockTest test single lock and unlock
 func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error {
-	mutex := g.GetLock("plus_" + variableName)
+	lock := g.GetLock("plus_" + variableName)
 	a := 0
 	wg := sync.WaitGroup{}
 	total := int32(0)
@@ -151,12 +150,12 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 			defer wg.Done()
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
-			err := mutex.LockContext(ctx)
+			err := lock.LockContext(ctx)
 			if err != nil {
 				return
 			}
 			a++
-			err = mutex.Unlock()
+			err = lock.Unlock()
 			if err != nil {
 				panic("unlock failed")
 			}
@@ -165,12 +164,12 @@ func singleLockUnlockTest(times int32, variableName string, g *GoRedisson) error
 	}
 	wg.Wait()
 	if int32(a) != total {
-		return fmt.Errorf("mutex lock and unlock test failed, %s shoule equal %d,but equal %d", variableName, total, a)
+		return fmt.Errorf("lock lock and unlock test failed, %s shoule equal %d,but equal %d", variableName, total, a)
 	}
 	return nil
 }
 
-// TestMutex_LockUnlock test mutex lock and unlock
+// TestMutex_LockUnlock test lock lock and unlock
 func TestMutex_LockUnlock(t *testing.T) {
 	testCase := []int32{1, 10, 100, 200, 300, 330}
 	for _, v := range testCase {
@@ -180,7 +179,7 @@ func TestMutex_LockUnlock(t *testing.T) {
 	}
 }
 
-// TestMultiMutex test multi mutex
+// TestMultiMutex test multi lock
 func TestMultiMutex(t *testing.T) {
 	testCases := []int32{1, 10, 100, 200}
 	id := 0
@@ -204,15 +203,15 @@ func TestMultiMutex(t *testing.T) {
 			wg.Wait()
 		}
 		if numOfFailures != 0 {
-			t.Fatalf("multi mutex test failed, numOfFailures should equal 0,but equal %d", numOfFailures)
+			t.Fatalf("multi lock test failed, numOfFailures should equal 0,but equal %d", numOfFailures)
 		}
 	}
 }
 
-// TestMutexFairness test mutex fairness
-func TestMutexFairness(t *testing.T) {
+// TestLockFairness test lock fairness
+func TestLockFairness(t *testing.T) {
 	g := getGoRedisson()
-	mu := g.GetLock("TestMutexFairness")
+	mu := g.GetLock("TestLockFairness")
 	stop := make(chan bool)
 	defer close(stop)
 	go func() {
@@ -259,9 +258,9 @@ func TestMutexFairness(t *testing.T) {
 	}
 }
 
-// benchmarkMutex benchmark mutex
-func benchmarkMutex(b *testing.B, slack, work bool) {
-	mu := getGoRedisson().GetLock("benchmarkMutex")
+// benchmarkLock benchmark lock
+func benchmarkLock(b *testing.B, slack, work bool) {
+	mu := getGoRedisson().GetLock("benchmarkLock")
 	if slack {
 		b.SetParallelism(10)
 	}
@@ -289,23 +288,23 @@ func benchmarkMutex(b *testing.B, slack, work bool) {
 	})
 }
 
-func BenchmarkMutex(b *testing.B) {
-	benchmarkMutex(b, false, false)
+func BenchmarkLock(b *testing.B) {
+	benchmarkLock(b, false, false)
 }
 
-func BenchmarkMutexSlack(b *testing.B) {
-	benchmarkMutex(b, true, false)
+func BenchmarkLockSlack(b *testing.B) {
+	benchmarkLock(b, true, false)
 }
 
-func BenchmarkMutexWork(b *testing.B) {
-	benchmarkMutex(b, false, true)
+func BenchmarkLockWork(b *testing.B) {
+	benchmarkLock(b, false, true)
 }
 
-func BenchmarkMutexWorkSlack(b *testing.B) {
-	benchmarkMutex(b, true, true)
+func BenchmarkLockWorkSlack(b *testing.B) {
+	benchmarkLock(b, true, true)
 }
 
-func HammerMutex(m Lock, loops int, cdone chan bool) {
+func HammerLock(m Lock, loops int, cdone chan bool) {
 	for i := 0; i < loops; i++ {
 		if i%3 == 0 {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -342,7 +341,7 @@ func TestMutex(t *testing.T) {
 
 	c := make(chan bool)
 	for i := 0; i < 10; i++ {
-		go HammerMutex(m, 1000, c)
+		go HammerLock(m, 1000, c)
 	}
 	for i := 0; i < 10; i++ {
 		<-c
@@ -350,21 +349,21 @@ func TestMutex(t *testing.T) {
 }
 
 func TestUnlockWithoutLocking(t *testing.T) {
-	mutex := getGoRedisson().GetLock("TestUnlockWithoutLocking")
+	lock := getGoRedisson().GetLock("TestUnlockWithoutLocking")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	cancel()
 	if err != nil {
 		panic(err)
 	}
 	go func() {
-		err := mutex.Unlock()
+		err := lock.Unlock()
 		if err == nil {
 			panic("it should not be nil")
 		}
 	}()
 	time.Sleep(1 * time.Second)
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		panic(err)
 	}
@@ -378,14 +377,14 @@ func TestRedisConnFailure(t *testing.T) {
 	})
 	g := NewGoRedisson(redisDB)
 	_ = redisDB.Close()
-	mutex := g.GetLock("TestRedisConnFailure")
+	lock := g.GetLock("TestRedisConnFailure")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	err := mutex.LockContext(ctx)
+	err := lock.LockContext(ctx)
 	cancel()
 	if err == nil {
 		panic("it should not be nil")
 	}
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err == nil {
 		panic("it should not be nil")
 	}
