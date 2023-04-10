@@ -63,7 +63,7 @@ func (g *GoRedisson) GetReadWriteLock(key string) ReadWriteLock {
 
 // GetMutex returns a Mutex named "key" which can be used to lock and unlock the resource "key".
 // A Mutex can be copied after first use, but most of the time it is advisable to keep instances of Lock.
-// the difference between Mutex and Lock is that Mutex can't be locked by the same thread twice.
+// the difference between Mutex and Lock is that Mutex can't be locked by any thread twice.
 func (g *GoRedisson) GetMutex(key string) Lock {
 	return newGoRedissonMutex(key, g)
 }
