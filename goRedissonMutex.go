@@ -73,7 +73,7 @@ return nil;
 // renewExpirationInner renews the mutex expiration
 func (m *goRedissonMutex) renewExpirationInner(ctx context.Context, goroutineId uint64) (int64, error) {
 	return m.goRedisson.client.Eval(ctx, `
-if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
+if (redis.call('exists', KEYS[1]) == 1) then
     redis.call('pexpire', KEYS[1], ARGV[1]);
     return 1;
 end ;

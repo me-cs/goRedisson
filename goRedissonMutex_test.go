@@ -20,7 +20,7 @@ func TestMutexRenew(t *testing.T) {
 		panic(err)
 	}
 
-	time.Sleep(15 * time.Second)
+	time.Sleep(35 * time.Second)
 	err = mutex.Unlock()
 	if err != nil {
 		panic(err)

@@ -38,7 +38,7 @@ func TestLockRenew(t *testing.T) {
 		panic(err)
 	}
 
-	time.Sleep(15 * time.Second)
+	time.Sleep(35 * time.Second)
 	err = lock.Unlock()
 	if err != nil {
 		panic(err)
@@ -56,7 +56,7 @@ func TestLockRenewTwice(t *testing.T) {
 		panic(err)
 	}
 
-	time.Sleep(25 * time.Second)
+	time.Sleep(45 * time.Second)
 	err = lock.Unlock()
 	if err != nil {
 		panic(err)
@@ -80,7 +80,7 @@ func TestLockRenewTogether(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			time.Sleep(15 * time.Second)
+			time.Sleep(35 * time.Second)
 			err = lock.Unlock()
 			if err != nil {
 				panic(err)
