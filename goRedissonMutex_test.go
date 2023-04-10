@@ -3,6 +3,7 @@ package goRedisson
 import (
 	"context"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"runtime"
 	"sync"
 	"testing"
@@ -311,4 +312,47 @@ func BenchmarkMutexSpin(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestMutexRedisConnFailure(t *testing.T) {
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	g := NewGoRedisson(redisDB)
+	_ = redisDB.Close()
+	lock := g.GetMutex("TestMutexRedisConnFailure")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	err := lock.LockContext(ctx)
+	cancel()
+	if err == nil {
+		panic("it should not be nil")
+	}
+	err = lock.Unlock()
+	if err == nil {
+		panic("it should not be nil")
+	}
+}
+
+func TestMutexUnlockFailed(t *testing.T) {
+	lock := getGoRedisson().GetMutex("TestMutexUnlockFailed")
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		err := lock.LockContext(ctx)
+		cancel()
+		if err != nil {
+			panic(err)
+		}
+	}()
+	time.Sleep(time.Second)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		err := lock.UnlockContext(ctx)
+		cancel()
+		if err == nil {
+			panic("it should not be nil")
+		}
+	}()
+	time.Sleep(2 * time.Second)
 }
