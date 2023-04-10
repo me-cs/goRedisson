@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 )
@@ -23,6 +24,46 @@ func TestMutexRenew(t *testing.T) {
 	err = mutex.Unlock()
 	if err != nil {
 		panic(err)
+	}
+}
+
+// testMutexLock test mutex lock unlock
+func testMutexLock(times int) {
+	l := getGoRedisson().GetMutex("testMutexLock")
+	a := 0
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		innerWg := sync.WaitGroup{}
+		for i := 0; i < times; i++ {
+			innerWg.Add(1)
+			go func() {
+				defer innerWg.Done()
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer cancel()
+				err := l.LockContext(ctx)
+				if err != nil {
+					panic(err)
+				}
+				a++
+				err = l.Unlock()
+				if err != nil {
+					panic(err)
+				}
+			}()
+		}
+		innerWg.Wait()
+	}()
+	wg.Wait()
+	if a != times {
+		panic(a)
+	}
+}
+
+func TestMutexLock(t *testing.T) {
+	for _, v := range []int{1, 10, 100, 200, 300, 400} {
+		testMutexLock(v)
 	}
 }
 
@@ -50,7 +91,7 @@ func HammerMutex(m Lock, loops int, cdone chan bool) {
 	cdone <- true
 }
 
-func TestMutex1(t *testing.T) {
+func TestMutex(t *testing.T) {
 	if n := runtime.SetMutexProfileFraction(1); n != 0 {
 		t.Logf("got mutexrate %d expected 0", n)
 	}

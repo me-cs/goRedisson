@@ -17,9 +17,9 @@ type goRedissonMutex struct {
 	goRedissonBaseLock
 }
 
-// getChannelName returns the channel name for the lock
+// getChannelName returns the channel name for the mutex
 func (m *goRedissonMutex) getChannelName() string {
-	return m.prefixName("redisson_lock__channel", m.getRawName())
+	return m.prefixName("redisson_mutex__channel", m.getRawName())
 }
 
 // newGoRedissonMutex creates a new goRedissonMutex
@@ -32,21 +32,7 @@ func newGoRedissonMutex(name string, goRedisson *GoRedisson) Lock {
 // tryLockInner tries to acquire the mutex
 func (m *goRedissonMutex) tryLockInner(ctx context.Context, leaseTime time.Duration, goroutineId uint64) (*int64, error) {
 	result, err := m.goRedisson.client.Eval(ctx, `
-if (redis.call('exists', KEYS[1]) == 0) then
-    local callVal = redis.call('hsetnx', KEYS[1], ARGV[2], 1);
-    if (callVal == 0) then
-        redis.call('pexpire', KEYS[1], ARGV[1]);
-        return redis.call('pttl', KEYS[1]);
-    end ;
-    redis.call('pexpire', KEYS[1], ARGV[1]);
-    return nil;
-end ;
-if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
-    local callVal = redis.call('hsetnx', KEYS[1], ARGV[2], 1);
-    if (callVal == 0) then
-        redis.call('pexpire', KEYS[1], ARGV[1]);
-        return redis.call('pttl', KEYS[1]);
-    end ;
+if (redis.call('setnx', KEYS[1], ARGV[2]) == 1) then
     redis.call('pexpire', KEYS[1], ARGV[1]);
     return nil;
 end ;
@@ -65,11 +51,8 @@ return redis.call('pttl', KEYS[1]);
 func (m *goRedissonMutex) unlockInner(ctx context.Context, goroutineId uint64) (*int64, error) {
 	defer m.cancelExpirationRenewal(goroutineId)
 	result, err := m.goRedisson.client.Eval(ctx, `
-if (redis.call('hexists', KEYS[1], ARGV[3]) == 0) then
-    return nil;
-end ;
-local val = redis.call('hget', KEYS[1], ARGV[3]);
-if (val ~= "1") then
+local val = redis.call('get', KEYS[1]);
+if (val ~= ARGV[3]) then
     return nil;
 else
     redis.call('del', KEYS[1]);
