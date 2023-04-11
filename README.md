@@ -165,7 +165,7 @@ func main() {
 	defer redisDB.Close()
 
 	g := goRedisson.NewGoRedisson(redisDB)
-	lock := g.GetLock("example")
+	lock := g.GetMutex("example")
 	err := lock.Lock()
 	if err != nil {
 		log.Print(err)
