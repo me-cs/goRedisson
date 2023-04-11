@@ -166,8 +166,8 @@ func main() {
 	defer redisDB.Close()
 
 	g := goRedisson.NewGoRedisson(redisDB)
-	lock := g.GetMutex("example")
-	err := lock.Lock()
+	mutex := g.GetMutex("example")
+	err := mutex.Lock()
 	if err != nil {
 		log.Print(err)
 		return
@@ -175,7 +175,7 @@ func main() {
 
 	// 你的业务代码
 
-	err = lock.Unlock()
+	err = mutex.Unlock()
 	if err != nil {
 		log.Print(err)
 		return
