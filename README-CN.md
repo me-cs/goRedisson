@@ -16,6 +16,8 @@
 
 ### 示例:
 
+
+lock
 ```go
 package main
 
@@ -24,13 +26,13 @@ import (
 	"log"
 	"sync"
 	"time"
-    
+
 	"github.com/me-cs/goRedisson"
 	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	// 创建redis 客户端
+	// 创建redis客户端
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -39,30 +41,40 @@ func main() {
 	defer redisDB.Close()
 
 	g := goRedisson.NewGoRedisson(redisDB)
-
-	mutex := g.GetLock("example")
-	ctx,cancel:=context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	err := mutex.LockContext(ctx)
+	lock := g.GetLock("example")
+	err := lock.Lock()
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	//你的业务代码
+	// 你的业务代码
 
-	err = mutex.Unlock()
+	err = lock.Unlock()
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	// 或者你也可是使用读写锁
-	testRwMutex()
 	return
 }
 
-func testRwMutex() {
+```
+
+rwlock
+```go
+package main
+
+import (
+	"context"
+	"sync"
+	"time"
+
+	"github.com/me-cs/goRedisson"
+	"github.com/redis/go-redis/v9"
+)
+
+func main() {
 	redisDB := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -82,7 +94,7 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 				err := l.WriteLock().LockContext(ctx)
 				if err != nil {
@@ -105,7 +117,7 @@ func testRwMutex() {
 			innerWg.Add(1)
 			go func() {
 				defer innerWg.Done()
-				ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 				err := l.ReadLock().LockContext(ctx)
 				if err != nil {
@@ -124,8 +136,52 @@ func testRwMutex() {
 	if a != 100 {
 		panic(a)
 	}
+
+	return
 }
 
+```
+
+mutex
+```go
+package main
+
+import (
+	"context"
+	"log"
+	"sync"
+	"time"
+
+	"github.com/me-cs/goRedisson"
+	"github.com/redis/go-redis/v9"
+)
+
+func main() {
+	// 创建redis 客户端
+	redisDB := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	defer redisDB.Close()
+
+	g := goRedisson.NewGoRedisson(redisDB)
+	lock := g.GetLock("example")
+	err := lock.Lock()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	// 你的业务代码
+
+	err = lock.Unlock()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+}
 ```
 
 ## 贡献
