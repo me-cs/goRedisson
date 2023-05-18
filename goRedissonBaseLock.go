@@ -268,7 +268,7 @@ func (m *goRedissonBaseLock) UnlockContext(ctx context.Context) error {
 		return err
 	}
 	if opStatus == nil {
-		return fmt.Errorf("attempt to unlock lock, not locked by current thread by node id: %s goroutine-id: %d", m.id, goroutineId)
+		return fmt.Errorf("attempt to unlock lock, not locked by current goroutine by node id: %s goroutine-id: %d", m.id, goroutineId)
 	}
 	return nil
 }

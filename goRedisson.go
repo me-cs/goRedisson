@@ -19,7 +19,7 @@ type GoRedisson struct {
 }
 
 // DefaultWatchDogTimeout
-// The default watchdog timeout, the watchdog will go every 1/3 of the DefaultWatchDogTimeout to renew the lock held by the current thread.
+// The default watchdog timeout, the watchdog will go every 1/3 of the DefaultWatchDogTimeout to renew the lock held by the current goroutine.
 var DefaultWatchDogTimeout = 30 * time.Second
 
 // NewGoRedisson returns a new GoRedisson instance.
