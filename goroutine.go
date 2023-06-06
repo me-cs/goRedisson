@@ -27,7 +27,6 @@ func getId() (uint64, error) {
 	}
 	b = b[:i]
 	n, err := strconv.ParseUint(unsafe.String(&b[0], len(b)), 10, 64)
-	//n, err := parseUintBytes(b, 10, 64)
 	if err != nil {
 		return 0, errors.New(fmt.Sprintf("Failed to parse goroutine ID out of %q: %v", b, err))
 	}
