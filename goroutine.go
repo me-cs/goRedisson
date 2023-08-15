@@ -2,7 +2,6 @@ package goRedisson
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -23,12 +22,12 @@ func getId() (uint64, error) {
 	b = bytes.TrimPrefix(b, goroutineSpace)
 	i := bytes.IndexByte(b, ' ')
 	if i < 0 {
-		return 0, errors.New(fmt.Sprintf("No space found in %q", b))
+		return 0, fmt.Errorf("no space found in %q", b)
 	}
 	b = b[:i]
 	n, err := strconv.ParseUint(unsafe.String(&b[0], len(b)), 10, 64)
 	if err != nil {
-		return 0, errors.New(fmt.Sprintf("Failed to parse goroutine ID out of %q: %v", b, err))
+		return 0, fmt.Errorf("failed to parse goroutine ID out of %q: %v", b, err)
 	}
 	return n, nil
 }
