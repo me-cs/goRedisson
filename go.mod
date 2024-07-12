@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/elliotchance/orderedmap/v2 v2.2.0
-	github.com/redis/go-redis/v9 v9.5.3
+	github.com/redis/go-redis/v9 v9.5.4
 	github.com/satori/go.uuid v1.2.0
 )
 
